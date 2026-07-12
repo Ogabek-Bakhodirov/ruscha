@@ -574,6 +574,7 @@ function phVideo(id){
       widgets[id]=new YG.Widget("w-"+id,{ width: slot.clientWidth||320, components:8,
         events:{ onFetchDone:function(d){ if(ph) ph.style.display = (d&&d.totalResult===0)?'block':'none';
                    if(d&&d.totalResult===0&&ph) ph.textContent="Bu ibora uchun video topilmadi."; },
+                 onVideoChange:function(d){ logVideo(id, d); },
                  onError:function(){ if(ph){ph.style.display='block';ph.textContent="Video yuklashda xatolik.";} } }});
       widgets[id].fetch(p.ru,"russian");
     }catch(e){ if(ph) ph.textContent="🎬 Video Telegram/brauzerda ochiladi."; }
@@ -582,6 +583,17 @@ function phVideo(id){
 function wCtl(id,act){
   var w=widgets[id]; if(!w) return;
   try{ if(act==='next')w.next(); else if(act==='prev')w.previous(); else if(act==='slow')w.setSpeed(0.5);}catch(e){}
+}
+/* YouGlish ochgan videoni jimgina bazaga yozamiz (o'z video-keshimiz boyiydi) */
+var loggedVids={};
+function logVideo(phraseId, d){
+  if(!SERVER || !d) return;
+  var vid = d.video || d.videoId || d.id;
+  if(!vid || typeof vid!=='string') return;
+  var key=phraseId+':'+vid;
+  if(loggedVids[key]) return;   // bir sessiyada bir marta
+  loggedVids[key]=1;
+  api('log_video',{phrase_id:phraseId, video_id:vid}).catch(function(){});
 }
 
 /* ================== QIDIRUV ================== */
