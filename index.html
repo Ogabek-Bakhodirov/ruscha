@@ -163,6 +163,23 @@
   .sense-syn{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .sense-syn .lbl{font-size:10.5px;color:var(--muted);font-weight:700}
   .syn-chip{font-size:11.5px;color:var(--text);background:var(--card-2);border:1px solid var(--line);border-radius:99px;padding:2px 9px}
+  .save-btn{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--card-2);color:var(--muted);border-radius:99px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+  .save-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(246,196,69,.12)}
+  .sv-group{margin:16px 0 8px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--text)}
+  .sv-group .fl{font-size:18px}
+  .sv-group .cnt{font-size:11px;color:var(--muted);font-weight:600}
+  .sv-item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-bottom:8px}
+  .sv-top{display:flex;align-items:center;gap:9px;cursor:pointer}
+  .sv-w{font-size:15px;font-weight:800;color:var(--text)}
+  .sv-tr{font-size:11.5px;color:var(--accent-2);font-weight:600}
+  .sv-first{font-size:12.5px;color:var(--muted);margin-left:2px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sv-x{border:none;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:2px 4px;flex:0 0 auto}
+  .sv-chevron{color:var(--muted);font-size:12px;transition:transform .2s;flex:0 0 auto}
+  .sv-item.open .sv-chevron{transform:rotate(180deg)}
+  .sv-body{display:none;margin-top:6px}
+  .sv-item.open .sv-body{display:block}
+  .sv-empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 16px}
+  .sv-empty .em{font-size:34px;display:block;margin-bottom:10px}
   .fb-row{padding:9px 11px;background:var(--card-2);border:1px solid var(--line);border-radius:10px;margin-bottom:7px}
   .fb-top{display:flex;align-items:center;gap:8px}
   .fb-score{font-size:14px;font-weight:800}
@@ -247,6 +264,13 @@
   </div>
 </div>
 
+<!-- ============ SAQLANGAN ============ -->
+<div class="page" id="pg-saved">
+  <h2 style="margin:2px 0 4px;font-size:20px">🔖 Saqlangan so'zlar</h2>
+  <p class="muted" style="font-size:12.5px;margin:0 0 14px">Qidiruvda saqlagan so'zlaringiz — til bo'yicha guruhlangan. Ustiga bosib ma'nosini ko'ring.</p>
+  <div id="savedList"></div>
+</div>
+
 <!-- ============ PRO ============ -->
 <div class="page" id="pg-pro">
   <div class="pro-hero">
@@ -287,6 +311,7 @@
 <div class="nav" id="nav" style="display:none">
   <button id="nav-home" onclick="go('home')"><span class="i">🏠</span>Asosiy</button>
   <button id="nav-search" onclick="go('search')"><span class="i">🔍</span>Qidiruv</button>
+  <button id="nav-saved" onclick="go('saved')"><span class="i">🔖</span>Saqlangan</button>
   <button id="nav-pro" onclick="go('pro')"><span class="i">⭐</span>Pro</button>
 </div>
 
@@ -361,7 +386,7 @@ function api(action, extra){
 
 /* ================== HOLAT (localStorage) ================== */
 var DEF = { onboarded:false, level:null, goal:null, interests:[], daily:10, pro:false,
-            langs:['ru'], curLang:'ru',
+            langs:['ru'], curLang:'ru', saved:{},
             learned:{}, day:"", todayNew:0, sDay:"", sCount:0, streak:0, lastDay:"" };
 var S;
 try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem('ru_state')||'{}')); }
@@ -408,16 +433,17 @@ function buildIndex(){
 }
 
 /* ================== NAVIGATSIYA ================== */
-var pages=['ob','home','cat','search','pro'];
+var pages=['ob','home','cat','search','saved','pro'];
 function go(p){
   pages.forEach(function(x){ document.getElementById('pg-'+x).classList.remove('active'); });
   document.getElementById('pg-'+p).classList.add('active');
-  ['home','search','pro'].forEach(function(x){
+  ['home','search','saved','pro'].forEach(function(x){
     var b=document.getElementById('nav-'+x); if(b) b.classList.toggle('on', x===p);
   });
   document.getElementById('nav').style.display = (p==='ob') ? 'none':'flex';
   if(p==='home') renderHome();
   if(p==='search') renderSearchMeta();
+  if(p==='saved') renderSaved();
   if(p==='pro' && IS_OWNER){ loadCodes(); loadFeedback(); }
   window.scrollTo(0,0);
 }
@@ -804,12 +830,18 @@ function loadDefine(q){
     }
   }).catch(function(){ defBusy=false; el.style.display='none'; });
 }
+var curDef=null;   // oxirgi ko'rsatilgan ma'no (saqlash uchun)
 function renderDefine(d){
   var el=document.getElementById('sDefine'); if(!el) return;
+  curDef=d;
   el.className='defcard';
+  var key=savedKey(S.curLang, d.word||'');
+  var on=!!S.saved[key];
   var h='<div class="def-head"><span class="def-word">'+escHtml(d.word||'')+'</span>'+
         (d.translit?'<span class="def-tr">['+escHtml(d.translit)+']</span>':'')+
-        (d.pos?'<span class="def-pos">'+escHtml(d.pos)+'</span>':'')+'</div>'+
+        (d.pos?'<span class="def-pos">'+escHtml(d.pos)+'</span>':'')+
+        '<button class="save-btn'+(on?' on':'')+'" id="defSaveBtn" onclick="toggleSaveCur()">'+
+          (on?'🔖 Saqlangan':'🔖 Saqlash')+'</button></div>'+
         '<p class="def-sub">Ma\'nolari '+langInfo(S.curLang).flag+'</p>';
   (d.senses||[]).forEach(function(s,i){
     h+='<div class="sense"><span class="sense-uz"><span class="sense-n">'+(i+1)+'</span>'+escHtml(s.uz||'')+'</span>';
@@ -828,6 +860,92 @@ function renderDefine(d){
   });
   el.innerHTML=h;
   el.style.display='block';
+}
+
+/* ================== SAQLANGAN SO'ZLAR ================== */
+function savedKey(lang, word){ return lang+':'+String(word||'').trim().toLowerCase(); }
+function defInnerHtml(d){
+  /* faqat ma'nolar (sarlavhasiz) — saqlangan sahifada ochilganda */
+  var h='';
+  (d.senses||[]).forEach(function(s,i){
+    h+='<div class="sense"><span class="sense-uz"><span class="sense-n">'+(i+1)+'</span>'+escHtml(s.uz||'')+'</span>';
+    if(s.note) h+='<div class="sense-note">'+escHtml(s.note)+'</div>';
+    if(s.example && (s.example.t||s.example.u)){
+      h+='<div class="sense-ex">'+
+         (s.example.t?'<div class="ex-t">“'+escHtml(s.example.t)+'”</div>':'')+
+         (s.example.u?'<div class="ex-u">'+escHtml(s.example.u)+'</div>':'')+'</div>';
+    }
+    if(s.syn && s.syn.length){
+      h+='<div class="sense-syn"><span class="lbl">Sinonim:</span>';
+      s.syn.slice(0,5).forEach(function(w){ h+='<span class="syn-chip">'+escHtml(w)+'</span>'; });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  return h;
+}
+function toggleSaveCur(){
+  if(!curDef || !curDef.word) return;
+  toggleSave(curDef.word, S.curLang, curDef);
+  var key=savedKey(S.curLang, curDef.word), on=!!S.saved[key];
+  var b=document.getElementById('defSaveBtn');
+  if(b){ b.classList.toggle('on', on); b.innerHTML = on?'🔖 Saqlangan':'🔖 Saqlash'; }
+}
+function toggleSave(word, lang, def){
+  var key=savedKey(lang, word);
+  if(S.saved[key]){
+    delete S.saved[key];
+    toast("Saqlanganlardan olib tashlandi");
+    if(SERVER) api('unsave_word',{q:word, lang:lang}).catch(function(){});
+  } else {
+    S.saved[key]={ word:def.word||word, translit:def.translit||'', lang:lang, def:def, at:Date.now() };
+    toast("🔖 Saqlandi");
+    if(SERVER) api('save_word',{q:word, lang:lang, def:def}).catch(function(){});
+  }
+  save();
+}
+function renderSaved(){
+  var el=document.getElementById('savedList'); if(!el) return;
+  var keys=Object.keys(S.saved);
+  if(!keys.length){
+    el.innerHTML='<div class="sv-empty"><span class="em">🔖</span>Hali saqlangan so\'z yo\'q.<br>Qidiruvda so\'z topib «Saqlash»ni bosing.</div>';
+    return;
+  }
+  // tilga qarab guruhlash
+  var groups={};
+  keys.forEach(function(k){ var it=S.saved[k]; (groups[it.lang]=groups[it.lang]||[]).push(Object.assign({key:k},it)); });
+  var h='';
+  LANGS.forEach(function(L){
+    var arr=groups[L.code]; if(!arr || !arr.length) return;
+    arr.sort(function(a,b){ return (b.at||0)-(a.at||0); });
+    h+='<div class="sv-group"><span class="fl">'+L.flag+'</span>'+L.name+'<span class="cnt">'+arr.length+' ta</span></div>';
+    arr.forEach(function(it){
+      var first=(it.def && it.def.senses && it.def.senses[0] && it.def.senses[0].uz) || '';
+      var sk=escHtml(it.key);
+      h+='<div class="sv-item" id="svi-'+cssId(it.key)+'">'+
+         '<div class="sv-top" onclick="toggleSavedItem(\''+jsStr(it.key)+'\')">'+
+           '<span class="sv-w">'+escHtml(it.word)+'</span>'+
+           (it.translit?'<span class="sv-tr">['+escHtml(it.translit)+']</span>':'')+
+           '<span class="sv-first">'+escHtml(first)+'</span>'+
+           '<span class="sv-chevron">▼</span>'+
+           '<button class="sv-x" onclick="event.stopPropagation();removeSaved(\''+jsStr(it.key)+'\')">🗑</button>'+
+         '</div>'+
+         '<div class="sv-body">'+defInnerHtml(it.def||{})+'</div>'+
+       '</div>';
+    });
+  });
+  el.innerHTML=h;
+}
+function cssId(k){ return k.replace(/[^a-z0-9]/gi,'_'); }
+function jsStr(k){ return String(k).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function toggleSavedItem(key){
+  var el=document.getElementById('svi-'+cssId(key)); if(el) el.classList.toggle('open');
+}
+function removeSaved(key){
+  var it=S.saved[key]; if(!it) return;
+  delete S.saved[key]; save(); renderSaved();
+  if(SERVER) api('unsave_word',{q:it.word, lang:it.lang}).catch(function(){});
+  toast("O'chirildi");
 }
 document.getElementById('sInput').addEventListener('keydown',function(e){ if(e.key==='Enter') doSearch(); });
 
@@ -977,6 +1095,8 @@ function boot(d){
       S.streak=res.user.streak||0;
       S.learned={};
       (res.learned||[]).forEach(function(pid){ S.learned[pid]=1; });
+      S.saved={};
+      (res.saved||[]).forEach(function(it){ if(it&&it.word) S.saved[savedKey(it.lang,it.word)]=it; });
       S.todayNew=(res.usage&&res.usage.new_count)||0;
       S.sCount=(res.usage&&res.usage.search_count)||0;
       IS_OWNER=!!res.is_owner;
