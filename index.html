@@ -131,6 +131,14 @@
   .feat small{display:block;color:var(--muted);font-size:12px;margin-top:1px}
   .codebox{display:flex;gap:8px;margin-top:10px}
   .codebox input{flex:1;background:var(--card-2);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;color:var(--text);font-size:14px;outline:none;text-transform:uppercase}
+  .codes-head{font-size:11px;color:var(--muted);margin:14px 0 8px}
+  .code-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--card-2);border:1px solid var(--line);border-radius:10px;margin-bottom:7px}
+  .code-val{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;font-weight:700;letter-spacing:.5px}
+  .code-val.used{opacity:.5;text-decoration:line-through}
+  .code-badge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap;flex:0 0 auto}
+  .code-badge.active{background:rgba(55,211,155,.16);color:var(--ok);border:1px solid rgba(55,211,155,.4)}
+  .code-badge.used{background:rgba(150,160,175,.14);color:var(--muted);border:1px solid var(--line)}
+  .code-who{font-size:10px;color:var(--muted);margin-left:6px;font-weight:600}
   .probadge{background:linear-gradient(135deg,#f6c445,#f09819);color:#241a00;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px}
 
   /* ---- pastki nav ---- */
@@ -222,10 +230,11 @@
     </div>
   </div>
   <div class="card" id="adminBox" style="display:none">
-    <b style="font-size:13.5px">👑 Admin: PRO kod yaratish</b>
+    <b style="font-size:13.5px">👑 Admin: PRO kodlar</b>
     <p class="muted" style="font-size:12px;margin:6px 0 10px">Har bosishda yangi bir martalik kod yaratiladi.</p>
     <button class="btn ghost" onclick="genCode()">➕ Yangi kod yaratish</button>
     <div id="genOut" style="display:none;margin-top:10px;background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13px"></div>
+    <div id="codesList"></div>
   </div>
 </div>
 
@@ -336,6 +345,7 @@ function go(p){
   document.getElementById('nav').style.display = (p==='ob') ? 'none':'flex';
   if(p==='home') renderHome();
   if(p==='search') renderSearchMeta();
+  if(p==='pro' && IS_OWNER) loadCodes();
   window.scrollTo(0,0);
 }
 function toast(msg){
@@ -647,8 +657,28 @@ function genCode(){
       var el=document.getElementById('genOut');
       el.style.display='block';
       el.innerHTML='Yangi kod: <b style="font-size:16px;letter-spacing:1px">'+res.code+'</b><br><small class="muted">Mijozga yuboring — bir marta ishlaydi.</small>';
+      loadCodes();
     } else toast("Xatolik");
   }).catch(function(){ toast("Internet xatosi"); });
+}
+/* Egasi: barcha kodlar ro'yxati + status */
+function renderCodes(codes){
+  var el=document.getElementById('codesList'); if(!el) return;
+  if(!codes || !codes.length){ el.innerHTML='<div class="codes-head">Hali kod yaratilmagan.</div>'; return; }
+  var used=0; codes.forEach(function(c){ if(c.used) used++; });
+  var h='<div class="codes-head">Jami: '+codes.length+'  ·  🟢 Aktiv: '+(codes.length-used)+'  ·  ⚪ Ishlatilgan: '+used+'</div>';
+  codes.forEach(function(c){
+    h+='<div class="code-row">'+
+       '<span class="code-val'+(c.used?' used':'')+'">'+c.code+
+         (c.used && c.who ? '<span class="code-who">'+c.who+'</span>' : '')+'</span>'+
+       (c.used ? '<span class="code-badge used">Ishlatilgan</span>' : '<span class="code-badge active">Aktiv</span>')+
+       '</div>';
+  });
+  el.innerHTML=h;
+}
+function loadCodes(){
+  if(!IS_OWNER) return;
+  api('list_codes').then(function(res){ if(res && res.ok) renderCodes(res.codes); }).catch(function(){});
 }
 
 /* ================== TTS ================== */
@@ -690,6 +720,7 @@ function boot(d){
       save();
       var ab=document.getElementById('adminBox');
       if(ab) ab.style.display=IS_OWNER?'block':'none';
+      if(IS_OWNER) loadCodes();
     }
     start();
   }).catch(function(){
