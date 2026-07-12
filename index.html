@@ -139,6 +139,12 @@
   .code-badge.active{background:rgba(55,211,155,.16);color:var(--ok);border:1px solid rgba(55,211,155,.4)}
   .code-badge.used{background:rgba(150,160,175,.14);color:var(--muted);border:1px solid var(--line)}
   .code-who{font-size:10px;color:var(--muted);margin-left:6px;font-weight:600}
+  .lswitch{display:flex;gap:8px;margin:2px 0 12px;flex-wrap:wrap;align-items:center}
+  .lbtn{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer}
+  .lbtn.on{border-color:var(--accent-2);color:var(--text);background:linear-gradient(135deg,rgba(91,140,255,.14),rgba(139,91,255,.14))}
+  .lbtn .fl{font-size:16px}
+  .lbtn.add{padding:7px 11px;font-size:15px;line-height:1}
+  .cat .soon{display:inline-block;font-size:10px;font-weight:800;color:var(--gold);border:1px solid var(--gold);border-radius:99px;padding:2px 8px;margin-top:6px}
   .fb-row{padding:9px 11px;background:var(--card-2);border:1px solid var(--line);border-radius:10px;margin-bottom:7px}
   .fb-top{display:flex;align-items:center;gap:8px}
   .fb-score{font-size:14px;font-weight:800}
@@ -190,6 +196,7 @@
     <div><span id="quotaLabel">Bugungi maqsad</span><br><b id="quotaTxt">0 / 10</b></div>
     <button class="pill" id="quotaBtn" onclick="go('pro')">⭐ Pro</button>
   </div>
+  <div class="lswitch" id="langSwitch"></div>
   <div class="grid" id="catGrid"></div>
 </div>
 
@@ -335,6 +342,7 @@ function api(action, extra){
 
 /* ================== HOLAT (localStorage) ================== */
 var DEF = { onboarded:false, level:null, goal:null, interests:[], daily:10, pro:false,
+            langs:['ru'], curLang:'ru',
             learned:{}, day:"", todayNew:0, sDay:"", sCount:0, streak:0, lastDay:"" };
 var S;
 try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem('ru_state')||'{}')); }
@@ -349,9 +357,36 @@ function resetDaily(){
 }
 resetDaily();
 
-/* ================== MA'LUMOT ================== */
-var DATA={categories:[]};
+/* ================== MA'LUMOT (ko'p tilli) ================== */
+var LANGS=[
+  {code:'ru', flag:'🇷🇺', name:'Rus tili',    yg:'russian', tts:'ru-RU', hint:'400+ ibora tayyor'},
+  {code:'en', flag:'🇬🇧', name:'Ingliz tili', yg:'english', tts:'en-US', hint:'Iboralar tez orada'},
+  {code:'de', flag:'🇩🇪', name:'Nemis tili',  yg:'german',  tts:'de-DE', hint:'Iboralar tez orada'}
+];
+function langInfo(c){ for(var i=0;i<LANGS.length;i++) if(LANGS[i].code===c) return LANGS[i]; return LANGS[0]; }
+/* Kategoriyalar — barcha tillar uchun bir xil tuzilma */
+var CAT_META=[
+  {key:"salomlashish", title:"Salomlashish va tanishuv", emoji:"👋"},
+  {key:"bozor",        title:"Bozorda va do'konda",      emoji:"🛒"},
+  {key:"ish",          title:"Ishda",                    emoji:"🏗️"},
+  {key:"intervyu",     title:"Ish intervyusida",         emoji:"💼"},
+  {key:"oila",         title:"Oilada va uyda",           emoji:"🏠"},
+  {key:"transport",    title:"Yo'lda va transportda",    emoji:"🚌"},
+  {key:"shifokor",     title:"Shifokorda",               emoji:"🏥"},
+  {key:"restoran",     title:"Restoranda va kafeda",     emoji:"🍽️"}
+];
+function emptyCats(){ return CAT_META.map(function(m){ return {key:m.key, title:m.title, emoji:m.emoji, phrases:[]}; }); }
+var LDATA={ ru:{categories:[]}, en:{categories:emptyCats()}, de:{categories:emptyCats()} };
+function cats(){ return (LDATA[S.curLang]||LDATA.ru).categories; }
 var byId={};
+function buildIndex(){
+  byId={};
+  LANGS.forEach(function(L){
+    (LDATA[L.code]?LDATA[L.code].categories:[]).forEach(function(c){
+      c.phrases.forEach(function(p){ p._lang=L.code; byId[p.id]=p; });
+    });
+  });
+}
 
 /* ================== NAVIGATSIYA ================== */
 var pages=['ob','home','cat','search','pro'];
@@ -373,9 +408,12 @@ function toast(msg){
 }
 
 /* ================== ONBOARDING ================== */
-var ob = { step:0, level:null, goal:null, interests:[], daily:10 };
+var ob = { step:0, langs:['ru'], level:null, goal:null, interests:[], daily:10 };
 var OB_STEPS = [
-  { title:"Rus tilini qanchalik bilasiz?", sub:"Darslarni darajangizga moslaymiz.",
+  { title:"Qaysi tillarni o'rganmoqchisiz?", sub:"Bir nechtasini tanlashingiz mumkin — keyin xohlagan payt almashtirasiz.",
+    opts: LANGS.map(function(L){ return {v:L.code, em:L.flag, t:L.name, s:L.hint}; }),
+    key:"langs", multi:true },
+  { title:"Til darajangiz qanday?", sub:"Darslarni darajangizga moslaymiz.",
     opts:[ {v:"new", em:"🌱", t:"Umuman bilmayman", s:"Noldan boshlaymiz"},
            {v:"some",em:"🌿", t:"Bir oz bilaman", s:"Tushunaman, lekin gapirish qiyin"},
            {v:"good",em:"🌳", t:"Yaxshi bilaman", s:"Erkin gaplashaman, boyitmoqchiman"} ], key:"level", multi:false },
@@ -397,10 +435,13 @@ function renderOb(){
   document.getElementById('obProg').innerHTML=prog;
   var h='<h2 class="ob-title">'+st.title+'</h2><p class="ob-sub">'+st.sub+'</p>';
   var opts = st.key==='interests'
-    ? DATA.categories.map(function(c){ return {v:c.key, em:c.emoji, t:c.title, s:c.phrases.length+" ta ibora"}; })
+    ? CAT_META.map(function(m){
+        var rc=LDATA.ru.categories.find(function(c){return c.key===m.key;});
+        return {v:m.key, em:m.emoji, t:m.title, s:(rc&&rc.phrases.length?rc.phrases.length+" ta ibora":"")};
+      })
     : st.opts;
   opts.forEach(function(o,i){
-    var sel = st.multi ? ob.interests.indexOf(o.v)>=0 : (ob[st.key]===o.v);
+    var sel = st.multi ? ob[st.key].indexOf(o.v)>=0 : (ob[st.key]===o.v);
     h+='<div class="opt'+(sel?' sel':'')+'" onclick="obPick('+i+')"><span class="em">'+o.em+'</span><div>'+o.t+
        (o.s?'<small>'+o.s+'</small>':'')+'</div></div>';
   });
@@ -412,22 +453,24 @@ function renderOb(){
 function obPick(i){
   var st=OB_STEPS[ob.step], o=window._obOpts[i];
   if(st.multi){
-    var ix=ob.interests.indexOf(o.v);
-    if(ix>=0) ob.interests.splice(ix,1); else ob.interests.push(o.v);
+    var arr=ob[st.key], ix=arr.indexOf(o.v);
+    if(ix>=0) arr.splice(ix,1); else arr.push(o.v);
   } else ob[st.key]=o.v;
   renderOb();
 }
 function obNext(){
   var st=OB_STEPS[ob.step];
-  if(st.multi ? ob.interests.length===0 : (ob[st.key]===null||ob[st.key]===undefined)){
+  if(st.multi ? ob[st.key].length===0 : (ob[st.key]===null||ob[st.key]===undefined)){
     toast("Iltimos, tanlang 🙂"); return;
   }
   if(ob.step<OB_STEPS.length-1){ ob.step++; renderOb(); return; }
   S.onboarded=true; S.level=ob.level; S.goal=ob.goal; S.interests=ob.interests.slice();
+  S.langs=ob.langs.slice();
+  S.curLang = ob.langs.indexOf('ru')>=0 ? 'ru' : ob.langs[0];
   S.daily=ob.daily;   // maqsad (cheklov emas). Bepul cheklov = FREE_DAILY, alohida.
   save();
   if(SERVER){
-    api('onboard',{level:ob.level, goal:ob.goal, interests:ob.interests, daily:ob.daily})
+    api('onboard',{level:ob.level, goal:ob.goal, interests:ob.interests, daily:ob.daily, langs:ob.langs})
       .catch(function(){ /* keyingi safar qayta uriniladi */ });
   }
   go('home');
@@ -440,9 +483,10 @@ function goal(){ return S.daily || 10; }                 // motivatsion maqsad
 function freeCap(){ return S.pro ? Infinity : FREE_DAILY; } // bepul qat'iy cheklov
 function renderHome(){
   setLogo();
+  renderLangSwitch();
   document.getElementById('stStreak').textContent=S.streak;
   document.getElementById('stLearned').textContent=learnedCount();
-  var tot=0; DATA.categories.forEach(function(c){tot+=c.phrases.length;});
+  var tot=0; cats().forEach(function(c){tot+=c.phrases.length;});
   document.getElementById('stTotal').textContent=tot;
   document.getElementById('proBadge').style.display=S.pro?'inline-block':'none';
   var g=goal(), reached=S.todayNew>=g;
@@ -450,24 +494,79 @@ function renderHome(){
   document.getElementById('quotaTxt').textContent = S.todayNew+" / "+g+(reached?" ✅":"");
   document.getElementById('quotaBtn').style.display=S.pro?'none':'inline-flex';
   // qiziqishlar birinchi
-  var order=DATA.categories.slice().sort(function(a,b){
+  var order=cats().slice().sort(function(a,b){
     var ai=S.interests.indexOf(a.key)>=0?0:1, bi=S.interests.indexOf(b.key)>=0?0:1;
     return ai-bi;
   });
   var h='';
   order.forEach(function(c){
+    var n=c.phrases.length;
+    if(!n){
+      h+='<div class="cat" onclick="openCat(\''+c.key+'\')" style="opacity:.75"><div class="em">'+c.emoji+'</div><h3>'+c.title+'</h3>'+
+         '<span class="soon">Tez orada 🚧</span></div>';
+      return;
+    }
     var done=c.phrases.filter(function(p){return S.learned[p.id];}).length;
-    var pct=Math.round(done/c.phrases.length*100);
+    var pct=Math.round(done/n*100);
     h+='<div class="cat" onclick="openCat(\''+c.key+'\')"><div class="em">'+c.emoji+'</div><h3>'+c.title+'</h3>'+
-       '<div class="cbar"><i style="width:'+pct+'%"></i></div><small>'+done+' / '+c.phrases.length+'</small></div>';
+       '<div class="cbar"><i style="width:'+pct+'%"></i></div><small>'+done+' / '+n+'</small></div>';
   });
   document.getElementById('catGrid').innerHTML=h;
+}
+
+/* ---- Til almashtirgich ---- */
+var langPanelOpen=false;
+function renderLangSwitch(){
+  var sw=document.getElementById('langSwitch'); if(!sw) return;
+  if(!S.langs || !S.langs.length) S.langs=['ru'];
+  var h='';
+  S.langs.forEach(function(c){
+    var L=langInfo(c);
+    h+='<button class="lbtn'+(c===S.curLang?' on':'')+'" onclick="switchLang(\''+c+'\')">'+
+       '<span class="fl">'+L.flag+'</span>'+c.toUpperCase()+'</button>';
+  });
+  h+='<button class="lbtn add" onclick="toggleLangPanel()" title="Til qo\'shish">'+(langPanelOpen?'✕':'＋')+'</button>';
+  if(langPanelOpen){
+    h+='<div style="flex-basis:100%;height:0"></div>';
+    LANGS.forEach(function(L){
+      var on=S.langs.indexOf(L.code)>=0;
+      h+='<button class="lbtn'+(on?' on':'')+'" onclick="toggleLang(\''+L.code+'\')">'+
+         '<span class="fl">'+L.flag+'</span>'+L.name+(on?' ✓':'')+'</button>';
+    });
+  }
+  sw.innerHTML=h;
+}
+function toggleLangPanel(){ langPanelOpen=!langPanelOpen; renderLangSwitch(); }
+function switchLang(c){
+  if(S.curLang===c) return;
+  S.curLang=c; save(); renderHome();
+  if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
+}
+function toggleLang(c){
+  var ix=S.langs.indexOf(c);
+  if(ix>=0){
+    if(S.langs.length===1){ toast("Kamida bitta til tanlangan bo'lishi kerak 🙂"); return; }
+    S.langs.splice(ix,1);
+    if(S.curLang===c) S.curLang=S.langs[0];
+  } else {
+    S.langs.push(c);
+    S.curLang=c;
+    toast(langInfo(c).flag+" "+langInfo(c).name+" qo'shildi!");
+  }
+  save();
+  if(SERVER) api('set_langs',{langs:S.langs}).catch(function(){});
+  renderHome();
 }
 
 /* ================== KATEGORIYA ================== */
 var curCat=null;
 function openCat(key){
-  curCat=DATA.categories.find(function(c){return c.key===key;});
+  curCat=cats().find(function(c){return c.key===key;});
+  if(!curCat) return;
+  if(!curCat.phrases.length){
+    toast(langInfo(S.curLang).flag+" Bu til uchun iboralar tez orada qo'shiladi 🚧");
+    return;
+  }
   document.getElementById('catHead').innerHTML=
     '<span class="em">'+curCat.emoji+'</span><div><h2>'+curCat.title+'</h2><p>'+curCat.phrases.length+' ta ibora</p></div>';
   var h='';
@@ -512,7 +611,7 @@ function openBody(id){
     body.innerHTML='<div class="translit">'+p.tr+'</div>'+
       '<div class="row">'+
         '<button class="sbtn v" onclick="phVideo('+id+')">▶ Videoni ko\'rish</button>'+
-        '<button class="sbtn t" onclick="speak(\''+encodeURIComponent(p.ru)+'\')">🔊 Talaffuz</button>'+
+        '<button class="sbtn t" onclick="speak(\''+encodeURIComponent(p.ru)+'\',\''+langInfo(p._lang||'ru').tts+'\')">🔊 Talaffuz</button>'+
       '</div>'+
       '<div class="ygslot" id="slot-'+id+'" style="display:none"></div>'+
       '<div class="ygctrl" id="ctl-'+id+'" style="display:none">'+
@@ -595,7 +694,7 @@ function phVideo(id){
                    if(d&&d.totalResult===0&&ph) ph.textContent="Bu ibora uchun video topilmadi."; },
                  onVideoChange:function(d){ logVideo(id, d); },
                  onError:function(){ if(ph){ph.style.display='block';ph.textContent="Video yuklashda xatolik.";} } }});
-      widgets[id].fetch(p.ru,"russian");
+      widgets[id].fetch(p.ru, langInfo(p._lang||'ru').yg);
     }catch(e){ if(ph) ph.textContent="🎬 Video Telegram/brauzerda ochiladi."; }
   });
 }
@@ -620,6 +719,11 @@ var sWidget=null;
 function renderSearchMeta(){
   document.getElementById('sCount').textContent = S.pro ? (S.sCount+"/∞") : (S.sCount+"/"+FREE_SEARCH);
   document.getElementById('sLock').style.display = (!S.pro && S.sCount>=FREE_SEARCH) ? 'block':'none';
+  var inp=document.getElementById('sInput');
+  if(inp){
+    var ex={ru:'спасибо', en:'thank you', de:'danke'};
+    inp.placeholder='Masalan: '+(ex[S.curLang]||ex.ru)+' '+langInfo(S.curLang).flag;
+  }
 }
 function runSearchWidget(q){
   var slot=document.getElementById('sSlot'); slot.style.display='block';
@@ -631,7 +735,7 @@ function runSearchWidget(q){
         slot.innerHTML='<div id="sW"></div>';
         sWidget=new YG.Widget("sW",{ width: slot.clientWidth||320, components:8 });
       }
-      sWidget.fetch(q,"russian");
+      sWidget.fetch(q, langInfo(S.curLang).yg);
     }catch(e){ slot.innerHTML='<div class="ph">Video yuklashda xatolik.</div>'; }
   });
 }
@@ -741,10 +845,10 @@ function loadFeedback(){
 }
 
 /* ================== TTS ================== */
-function speak(enc){
+function speak(enc, tts){
   if(!('speechSynthesis' in window)) return;
   var u=new SpeechSynthesisUtterance(decodeURIComponent(enc));
-  u.lang='ru-RU'; u.rate=.9;
+  u.lang=tts||'ru-RU'; u.rate=.9;
   window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
 }
 
@@ -777,8 +881,10 @@ function fetchPhrases(){
     });
 })();
 function boot(d){
-  DATA=d;
-  DATA.categories.forEach(function(c){ c.phrases.forEach(function(p){ byId[p.id]=p; }); });
+  LDATA.ru=d;
+  buildIndex();
+  if(!S.langs || !S.langs.length){ S.langs=['ru']; }
+  if(S.langs.indexOf(S.curLang)<0) S.curLang=S.langs[0];
   if(!SERVER){ start(); return; }
   /* Server rejimi: init ALLAQACHON ishga tushgan (parallel) — natijasini kutamiz */
   initPromise.then(function(res){
@@ -787,6 +893,8 @@ function boot(d){
       S.onboarded = !!res.user.onboarded;
       S.level=res.user.level; S.goal=res.user.goal;
       S.interests=res.user.interests||[];
+      S.langs=(res.user.langs&&res.user.langs.length)?res.user.langs:(S.langs&&S.langs.length?S.langs:['ru']);
+      if(S.langs.indexOf(S.curLang)<0) S.curLang=S.langs[0];
       S.daily=res.user.daily||10;
       S.pro=!!res.user.pro;
       S.streak=res.user.streak||0;
