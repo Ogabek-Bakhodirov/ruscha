@@ -853,17 +853,20 @@ function speak(enc, tts){
 }
 
 /* ================== ISHGA TUSHIRISH ================== */
-var PH_VER = "v2";   // phrases.json versiyasi — kontent o'zgarsa oshiring (kesh yangilanadi)
+var PH_VER = "v3";   // phrases.json versiyasi — kontent o'zgarsa oshiring (kesh yangilanadi)
 
 /* 1) init'ni DARROV yuboramiz — phrases yuklanishini KUTMASDAN (parallel, tezlik uchun) */
 var initPromise = SERVER ? api('init').catch(function(){ return null; }) : Promise.resolve(false);
 
 /* 2) phrases: bor bo'lsa localStorage keshdan bir zumda, tarmoqni fon rejimida yangilaymiz */
 function fetchPhrases(){
-  return fetch('phrases.json',{cache:'force-cache'})
+  // ?v=PH_VER — versiya o'zgarsa yangi URL bo'ladi, eski brauzer keshi chetlab o'tiladi
+  return fetch('phrases.json?v='+PH_VER,{cache:'no-cache'})
     .then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(d){ try{ localStorage.setItem('ru_phrases_'+PH_VER, JSON.stringify(d)); }catch(e){} return d; });
 }
+/* eski zaharlangan keshlarni tozalaymiz */
+try{ ['ru_phrases_v1','ru_phrases_v2'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
 (function(){
   var cached=null;
   try{ cached = JSON.parse(localStorage.getItem('ru_phrases_'+PH_VER)||'null'); }catch(e){}
