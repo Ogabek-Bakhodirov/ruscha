@@ -180,6 +180,8 @@
   .sv-item.open .sv-body{display:block}
   .sv-empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 16px}
   .sv-empty .em{font-size:34px;display:block;margin-bottom:10px}
+  .sv-vid{margin-top:11px}
+  .svid{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer}
   .fb-row{padding:9px 11px;background:var(--card-2);border:1px solid var(--line);border-radius:10px;margin-bottom:7px}
   .fb-top{display:flex;align-items:center;gap:8px}
   .fb-score{font-size:14px;font-weight:800}
@@ -282,6 +284,7 @@
   <div class="card">
     <div class="feat"><span class="em">♾️</span><div><b>Cheksiz yangi iboralar</b><small>Bepul: kuniga 5 ta. Pro: xohlaganingizcha.</small></div></div>
     <div class="feat"><span class="em">🔍</span><div><b>Cheksiz qidiruv</b><small>Bepul: kuniga 3 ta. Pro: istalgan so'zni istalgancha qidiring.</small></div></div>
+    <div class="feat"><span class="em">🎬</span><div><b>Saqlangan so'zlar videosi</b><small>Saqlagan har bir so'zingizni videoda qayta ko'ring — faqat Pro'da.</small></div></div>
     <div class="feat"><span class="em">📂</span><div><b>Barcha kategoriyalar ochiq</b><small>8 mavzu, 400 ibora — hammasi to'liq.</small></div></div>
     <div class="feat"><span class="em">🚀</span><div><b>Yangi funksiyalarga birinchi kirish</b><small>Yangi mavzular va imkoniyatlar avval Pro'da.</small></div></div>
   </div>
@@ -904,8 +907,10 @@ function toggleSave(word, lang, def){
   }
   save();
 }
+var savedWidgets={};
 function renderSaved(){
   var el=document.getElementById('savedList'); if(!el) return;
+  savedWidgets={};   // qayta chizishda eski widgetlar bekor bo'ladi
   var keys=Object.keys(S.saved);
   if(!keys.length){
     el.innerHTML='<div class="sv-empty"><span class="em">🔖</span>Hali saqlangan so\'z yo\'q.<br>Qidiruvda so\'z topib «Saqlash»ni bosing.</div>';
@@ -930,7 +935,13 @@ function renderSaved(){
            '<span class="sv-chevron">▼</span>'+
            '<button class="sv-x" onclick="event.stopPropagation();removeSaved(\''+jsStr(it.key)+'\')">🗑</button>'+
          '</div>'+
-         '<div class="sv-body">'+defInnerHtml(it.def||{})+'</div>'+
+         '<div class="sv-body">'+defInnerHtml(it.def||{})+
+           '<div class="sv-vid">'+(S.pro
+             ? '<button class="svid" onclick="savedVideo(\''+jsStr(it.key)+'\')">▶ Videoni ko\'rish</button>'+
+               '<div class="ygslot" id="svslot-'+cssId(it.key)+'" style="display:none;margin-top:8px"></div>'
+             : '<button class="btn gold" onclick="go(\'pro\')">🎬 Pro bilan videosini ko\'ring</button>'
+           )+'</div>'+
+         '</div>'+
        '</div>';
     });
   });
@@ -946,6 +957,27 @@ function removeSaved(key){
   delete S.saved[key]; save(); renderSaved();
   if(SERVER) api('unsave_word',{q:it.word, lang:it.lang}).catch(function(){});
   toast("O'chirildi");
+}
+/* Pro: saqlangan so'z videosini shu yerda ochish (o'z tilida) */
+function savedVideo(key){
+  if(!S.pro){ go('pro'); return; }
+  var it=S.saved[key]; if(!it) return;
+  var el=document.getElementById('svi-'+cssId(key)); if(el) el.classList.add('open');
+  var slot=document.getElementById('svslot-'+cssId(key)); if(!slot) return;
+  slot.style.display='block';
+  if(savedWidgets[key]) return;
+  slot.innerHTML='<div class="ph" id="svph-'+cssId(key)+'">Video yuklanmoqda…</div><div id="svw-'+cssId(key)+'"></div>';
+  ensureYG(function(err){
+    var ph=document.getElementById('svph-'+cssId(key));
+    if(err||!window.YG){ if(ph) ph.textContent="🎬 Video Telegram/brauzerda ochiladi."; return; }
+    try{
+      savedWidgets[key]=new YG.Widget("svw-"+cssId(key),{ width: slot.clientWidth||320, components:8,
+        events:{ onFetchDone:function(d){ if(ph) ph.style.display=(d&&d.totalResult===0)?'block':'none';
+                   if(d&&d.totalResult===0&&ph) ph.textContent="Bu so'z uchun video topilmadi."; },
+                 onError:function(){ if(ph){ph.style.display='block';ph.textContent="Video yuklashda xatolik.";} } }});
+      savedWidgets[key].fetch(it.word, langInfo(it.lang).yg);
+    }catch(e){ if(ph) ph.textContent="🎬 Video ochiladi."; }
+  });
 }
 document.getElementById('sInput').addEventListener('keydown',function(e){ if(e.key==='Enter') doSearch(); });
 
