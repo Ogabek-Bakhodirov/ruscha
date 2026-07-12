@@ -930,9 +930,11 @@ function toggleSave(word, lang, def){
   save();
 }
 var savedWidgets={};
+var _svList=[];   // indeks -> saqlangan element (noyob DOM id uchun)
 function renderSaved(){
   var el=document.getElementById('savedList'); if(!el) return;
   savedWidgets={};   // qayta chizishda eski widgetlar bekor bo'ladi
+  _svList=[];
   var keys=Object.keys(S.saved);
   if(!keys.length){
     el.innerHTML='<div class="sv-empty"><span class="em">🔖</span>Hali saqlangan so\'z yo\'q.<br>Qidiruvda so\'z topib «Saqlash»ni bosing.</div>';
@@ -947,20 +949,20 @@ function renderSaved(){
     arr.sort(function(a,b){ return (b.at||0)-(a.at||0); });
     h+='<div class="sv-group"><span class="fl">'+L.flag+'</span>'+L.name+'<span class="cnt">'+arr.length+' ta</span></div>';
     arr.forEach(function(it){
+      var i=_svList.length; _svList.push(it);   // noyob indeks
       var first=(it.def && it.def.senses && it.def.senses[0] && it.def.senses[0].uz) || '';
-      var sk=escHtml(it.key);
-      h+='<div class="sv-item" id="svi-'+cssId(it.key)+'">'+
-         '<div class="sv-top" onclick="toggleSavedItem(\''+jsStr(it.key)+'\')">'+
+      h+='<div class="sv-item" id="svi-'+i+'">'+
+         '<div class="sv-top" onclick="toggleSavedItem('+i+')">'+
            '<span class="sv-w">'+escHtml(it.word)+'</span>'+
            (it.translit?'<span class="sv-tr">['+escHtml(it.translit)+']</span>':'')+
            '<span class="sv-first">'+escHtml(first)+'</span>'+
            '<span class="sv-chevron">▼</span>'+
-           '<button class="sv-x" onclick="event.stopPropagation();removeSaved(\''+jsStr(it.key)+'\')">🗑</button>'+
+           '<button class="sv-x" onclick="event.stopPropagation();removeSaved('+i+')">🗑</button>'+
          '</div>'+
          '<div class="sv-body">'+defInnerHtml(it.def||{})+
            '<div class="sv-vid">'+(S.pro
-             ? '<button class="svid" onclick="savedVideo(\''+jsStr(it.key)+'\')">▶ Videoni ko\'rish</button>'+
-               '<div class="ygslot" id="svslot-'+cssId(it.key)+'" style="display:none;margin-top:8px"></div>'
+             ? '<button class="svid" onclick="savedVideo('+i+')">▶ Videoni ko\'rish</button>'+
+               '<div class="ygslot" id="svslot-'+i+'" style="display:none;margin-top:8px"></div>'
              : '<button class="btn gold" onclick="go(\'pro\')">🎬 Pro bilan videosini ko\'ring</button>'
            )+'</div>'+
          '</div>'+
@@ -969,35 +971,33 @@ function renderSaved(){
   });
   el.innerHTML=h;
 }
-function cssId(k){ return k.replace(/[^a-z0-9]/gi,'_'); }
-function jsStr(k){ return String(k).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
-function toggleSavedItem(key){
-  var el=document.getElementById('svi-'+cssId(key)); if(el) el.classList.toggle('open');
+function toggleSavedItem(i){
+  var el=document.getElementById('svi-'+i); if(el) el.classList.toggle('open');
 }
-function removeSaved(key){
-  var it=S.saved[key]; if(!it) return;
-  delete S.saved[key]; save(); renderSaved();
+function removeSaved(i){
+  var it=_svList[i]; if(!it) return;
+  delete S.saved[it.key]; save(); renderSaved();
   if(SERVER) api('unsave_word',{q:it.word, lang:it.lang}).catch(function(){});
   toast("O'chirildi");
 }
 /* Pro: saqlangan so'z videosini shu yerda ochish (o'z tilida) */
-function savedVideo(key){
+function savedVideo(i){
   if(!S.pro){ go('pro'); return; }
-  var it=S.saved[key]; if(!it) return;
-  var el=document.getElementById('svi-'+cssId(key)); if(el) el.classList.add('open');
-  var slot=document.getElementById('svslot-'+cssId(key)); if(!slot) return;
+  var it=_svList[i]; if(!it) return;
+  var el=document.getElementById('svi-'+i); if(el) el.classList.add('open');
+  var slot=document.getElementById('svslot-'+i); if(!slot) return;
   slot.style.display='block';
-  if(savedWidgets[key]) return;
-  slot.innerHTML='<div class="ph" id="svph-'+cssId(key)+'">Video yuklanmoqda…</div><div id="svw-'+cssId(key)+'"></div>';
+  if(savedWidgets[i]) return;
+  slot.innerHTML='<div class="ph" id="svph-'+i+'">Video yuklanmoqda…</div><div id="svw-'+i+'"></div>';
   ensureYG(function(err){
-    var ph=document.getElementById('svph-'+cssId(key));
+    var ph=document.getElementById('svph-'+i);
     if(err||!window.YG){ if(ph) ph.textContent="🎬 Video Telegram/brauzerda ochiladi."; return; }
     try{
-      savedWidgets[key]=new YG.Widget("svw-"+cssId(key),{ width: slot.clientWidth||320, components:8,
+      savedWidgets[i]=new YG.Widget("svw-"+i,{ width: slot.clientWidth||320, components:8,
         events:{ onFetchDone:function(d){ if(ph) ph.style.display=(d&&d.totalResult===0)?'block':'none';
                    if(d&&d.totalResult===0&&ph) ph.textContent="Bu so'z uchun video topilmadi."; },
                  onError:function(){ if(ph){ph.style.display='block';ph.textContent="Video yuklashda xatolik.";} } }});
-      savedWidgets[key].fetch(it.word, langInfo(it.lang).yg);
+      savedWidgets[i].fetch(it.word, langInfo(it.lang).yg);
     }catch(e){ if(ph) ph.textContent="🎬 Video ochiladi."; }
   });
 }
