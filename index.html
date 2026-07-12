@@ -148,9 +148,17 @@
   .nav button.on{color:var(--accent)}
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:86px;background:var(--card-2);border:1px solid var(--line);color:var(--text);padding:10px 18px;border-radius:12px;font-size:13px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:88%;text-align:center}
   .toast.show{opacity:1}
+  #splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg)}
+  #splash.hide{opacity:0;pointer-events:none;transition:opacity .28s ease}
+  .sp-logo{font-size:27px;font-weight:800;letter-spacing:.5px;background:linear-gradient(135deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sp-spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--accent-2);border-radius:50%;animation:spspin .8s linear infinite}
+  @keyframes spspin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
+
+<!-- ============ SPLASH (yuklanish) ============ -->
+<div id="splash"><div class="sp-logo">Seyly</div><div class="sp-spin"></div></div>
 
 <!-- ============ ONBOARDING ============ -->
 <div class="page" id="pg-ob">
@@ -702,21 +710,40 @@ function speak(enc){
 }
 
 /* ================== ISHGA TUSHIRISH ================== */
-fetch('phrases.json',{cache:'no-store'})
-  .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-  .then(function(d){ boot(d); })
-  .catch(function(){
-    // zaxira: kichik namuna
-    boot({categories:[{key:"salomlashish",title:"Salomlashish",emoji:"👋",phrases:[
-      {id:1,ru:"Здравствуйте!",tr:"Zdravstvuyte!",uz:"Assalomu alaykum!"},
-      {id:2,ru:"Как дела?",tr:"Kak dela?",uz:"Ishlar qalay?"}]}]});
-  });
+var PH_VER = "v1";   // phrases.json versiyasi — kontent o'zgarsa oshiring (kesh yangilanadi)
+
+/* 1) init'ni DARROV yuboramiz — phrases yuklanishini KUTMASDAN (parallel, tezlik uchun) */
+var initPromise = SERVER ? api('init').catch(function(){ return null; }) : Promise.resolve(false);
+
+/* 2) phrases: bor bo'lsa localStorage keshdan bir zumda, tarmoqni fon rejimida yangilaymiz */
+function fetchPhrases(){
+  return fetch('phrases.json',{cache:'force-cache'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){ try{ localStorage.setItem('ru_phrases_'+PH_VER, JSON.stringify(d)); }catch(e){} return d; });
+}
+(function(){
+  var cached=null;
+  try{ cached = JSON.parse(localStorage.getItem('ru_phrases_'+PH_VER)||'null'); }catch(e){}
+  if(cached && cached.categories && cached.categories.length){
+    boot(cached);                 // darhol ko'rsatamiz
+    fetchPhrases().catch(function(){});   // fon: keyingi safar uchun yangilab qo'yamiz
+    return;
+  }
+  fetchPhrases()
+    .then(function(d){ boot(d); })
+    .catch(function(){
+      boot({categories:[{key:"salomlashish",title:"Salomlashish",emoji:"👋",phrases:[
+        {id:1,ru:"Здравствуйте!",tr:"Zdravstvuyte!",uz:"Assalomu alaykum!"},
+        {id:2,ru:"Как дела?",tr:"Kak dela?",uz:"Ishlar qalay?"}]}]});
+    });
+})();
 function boot(d){
   DATA=d;
   DATA.categories.forEach(function(c){ c.phrases.forEach(function(p){ byId[p.id]=p; }); });
   if(!SERVER){ start(); return; }
-  /* Server rejimi: profil va progressni bazadan olamiz (istalgan qurilmada bir xil) */
-  api('init').then(function(res){
+  /* Server rejimi: init ALLAQACHON ishga tushgan (parallel) — natijasini kutamiz */
+  initPromise.then(function(res){
+    if(res===null){ toast("Server bilan aloqa yo'q — vaqtincha oflayn rejim"); }
     if(res && res.user){
       S.onboarded = !!res.user.onboarded;
       S.level=res.user.level; S.goal=res.user.goal;
@@ -740,8 +767,12 @@ function boot(d){
     start();
   });
 }
+var _started=false;
 function start(){
+  if(_started) return; _started=true;   // ikki marta chaqirilmasin
   setProLogo();
+  var sp=document.getElementById('splash');
+  if(sp){ sp.classList.add('hide'); setTimeout(function(){ sp.style.display='none'; }, 300); }
   if(S.onboarded){ go('home'); } else { renderOb(); go('ob'); }
 }
 </script>
