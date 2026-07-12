@@ -216,7 +216,7 @@
     <p>Cheklovlarsiz o'rganing</p>
   </div>
   <div class="card">
-    <div class="feat"><span class="em">♾️</span><div><b>Cheksiz yangi iboralar</b><small>Bepul: kuniga 10 ta. Pro: xohlaganingizcha.</small></div></div>
+    <div class="feat"><span class="em">♾️</span><div><b>Cheksiz yangi iboralar</b><small>Bepul: kuniga 5 ta. Pro: xohlaganingizcha.</small></div></div>
     <div class="feat"><span class="em">🔍</span><div><b>Cheksiz qidiruv</b><small>Bepul: kuniga 3 ta. Pro: istalgan so'zni istalgancha qidiring.</small></div></div>
     <div class="feat"><span class="em">📂</span><div><b>Barcha kategoriyalar ochiq</b><small>8 mavzu, 400 ibora — hammasi to'liq.</small></div></div>
     <div class="feat"><span class="em">🚀</span><div><b>Yangi funksiyalarga birinchi kirish</b><small>Yangi mavzular va imkoniyatlar avval Pro'da.</small></div></div>
@@ -249,7 +249,7 @@
 
 <script>
 /* ================== SOZLAMALAR ================== */
-var FREE_DAILY = 10;          // bepul: kuniga yangi iboralar
+var FREE_DAILY = 5;           // bepul: kuniga yangi iboralar
 var FREE_SEARCH = 3;          // bepul: kuniga qidiruvlar
 var PRO_CONTACT = "https://t.me/bakhodirov_23";   // Pro uchun bog'lanish
 var API_URL = "https://ubctutftqgbgcevfziil.supabase.co/functions/v1/api"; // backend
@@ -368,9 +368,9 @@ var OB_STEPS = [
   { title:"Qaysi mavzular qiziq?", sub:"Bir nechtasini tanlashingiz mumkin.",
     opts:[], key:"interests", multi:true },
   { title:"Kuniga nechta ibora?", sub:"Oz-ozdan, lekin har kuni — eng samarali yo'l.",
-    opts:[ {v:5,  em:"🙂", t:"5 ta — yengil", s:"Kuniga ~3 daqiqa"},
-           {v:10, em:"💪", t:"10 ta — faol", s:"Kuniga ~7 daqiqa"},
-           {v:15, em:"🔥", t:"15 ta — jadal", s:"Bepulda 10 tagacha, Pro bilan to'liq"} ], key:"daily", multi:false }
+    opts:[ {v:5,  em:"🙂", t:"5 ta — yengil", s:"Bepul rejaga to'liq mos"},
+           {v:10, em:"💪", t:"10 ta — faol", s:"Bepulda 5 tagacha, Pro bilan to'liq"},
+           {v:15, em:"🔥", t:"15 ta — jadal", s:"Bepulda 5 tagacha, Pro bilan to'liq"} ], key:"daily", multi:false }
 ];
 function renderOb(){
   var st=OB_STEPS[ob.step];
