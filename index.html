@@ -139,6 +139,12 @@
   .code-badge.active{background:rgba(55,211,155,.16);color:var(--ok);border:1px solid rgba(55,211,155,.4)}
   .code-badge.used{background:rgba(150,160,175,.14);color:var(--muted);border:1px solid var(--line)}
   .code-who{font-size:10px;color:var(--muted);margin-left:6px;font-weight:600}
+  .fb-row{padding:9px 11px;background:var(--card-2);border:1px solid var(--line);border-radius:10px;margin-bottom:7px}
+  .fb-top{display:flex;align-items:center;gap:8px}
+  .fb-score{font-size:14px;font-weight:800}
+  .fb-who{font-size:11px;color:var(--muted);font-weight:600}
+  .fb-date{font-size:10px;color:var(--muted);margin-left:auto}
+  .fb-text{font-size:12.5px;margin-top:5px;line-height:1.4;color:var(--text);white-space:pre-wrap;word-break:break-word}
   .probadge{background:linear-gradient(135deg,#f6c445,#f09819);color:#241a00;font-size:10px;font-weight:800;border-radius:6px;padding:2px 6px}
 
   /* ---- pastki nav ---- */
@@ -243,6 +249,11 @@
     <button class="btn ghost" onclick="genCode()">➕ Yangi kod yaratish</button>
     <div id="genOut" style="display:none;margin-top:10px;background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13px"></div>
     <div id="codesList"></div>
+  </div>
+  <div class="card" id="fbBox" style="display:none">
+    <b style="font-size:13.5px">💬 Admin: Foydalanuvchi otzivlari</b>
+    <div id="fbStat" class="codes-head" style="margin:8px 0 8px"></div>
+    <div id="fbList"></div>
   </div>
 </div>
 
@@ -353,7 +364,7 @@ function go(p){
   document.getElementById('nav').style.display = (p==='ob') ? 'none':'flex';
   if(p==='home') renderHome();
   if(p==='search') renderSearchMeta();
-  if(p==='pro' && IS_OWNER) loadCodes();
+  if(p==='pro' && IS_OWNER){ loadCodes(); loadFeedback(); }
   window.scrollTo(0,0);
 }
 function toast(msg){
@@ -700,6 +711,34 @@ function loadCodes(){
   if(!IS_OWNER) return;
   api('list_codes').then(function(res){ if(res && res.ok) renderCodes(res.codes); }).catch(function(){});
 }
+function escHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+/* Egasi: otzivlar (1-10 baho + takliflar) */
+function renderFeedback(res){
+  var el=document.getElementById('fbList'); if(!el) return;
+  var st=document.getElementById('fbStat');
+  var fb=res.feedback||[];
+  if(st) st.innerHTML = fb.length
+    ? ('O‘rtacha baho: <b style="color:var(--text)">'+(res.avg!=null?res.avg.toFixed(1):'—')+'/10</b>  ·  Jami: '+(res.count||0)+' ta baho')
+    : 'Hali otziv yo‘q.';
+  var h='';
+  fb.forEach(function(f){
+    var r=f.rating;
+    var color = r>=8?'var(--ok)':(r>=5?'var(--gold)':'#ff6b6b');
+    var d=''; try{ if(f.at) d=new Date(f.at).toLocaleDateString('ru-RU'); }catch(e){}
+    h+='<div class="fb-row"><div class="fb-top">'+
+       '<span class="fb-score" style="color:'+color+'">'+(r!=null?r+'/10':'—')+'</span>'+
+       '<span class="fb-who">'+escHtml(f.who||'')+'</span>'+
+       '<span class="fb-date">'+d+'</span></div>'+
+       (f.suggestion ? '<div class="fb-text">'+escHtml(f.suggestion)+'</div>' : '')+
+       '</div>';
+  });
+  el.innerHTML=h;
+}
+function loadFeedback(){
+  if(!IS_OWNER) return;
+  api('list_feedback').then(function(res){ if(res && res.ok) renderFeedback(res); }).catch(function(){});
+}
 
 /* ================== TTS ================== */
 function speak(enc){
@@ -759,7 +798,9 @@ function boot(d){
       save();
       var ab=document.getElementById('adminBox');
       if(ab) ab.style.display=IS_OWNER?'block':'none';
-      if(IS_OWNER) loadCodes();
+      var fbb=document.getElementById('fbBox');
+      if(fbb) fbb.style.display=IS_OWNER?'block':'none';
+      if(IS_OWNER){ loadCodes(); loadFeedback(); }
     }
     start();
   }).catch(function(){
