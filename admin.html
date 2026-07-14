@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Seyly — Admin</title>
+<style>
+  :root{ --bg:#0f1115; --card:#1a1d24; --card-2:#20242d; --text:#eef1f6; --muted:#9aa3b2;
+    --accent:#5b8cff; --accent-2:#8b5bff; --ok:#37d39b; --gold:#f6c445; --line:#2a2f3a; --shadow:rgba(0,0,0,.35); }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:22px;margin:0 0 2px} .muted{color:var(--muted)}
+  .btn{border:none;border-radius:12px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+  .btn.ghost{background:var(--card-2);color:var(--text);border:1px solid var(--line)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 6px 18px var(--shadow)}
+  input,textarea{background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:11px;font-size:14px;color:var(--text);font-family:inherit;width:100%}
+  /* Login */
+  #login{max-width:340px;margin:12vh auto 0}
+  #login .card{padding:22px}
+  #login input{margin-bottom:10px}
+  #loginErr{color:#e5484d;font-size:13px;min-height:16px;margin-bottom:6px}
+  /* Tabs / range */
+  .tabs{display:flex;gap:6px;margin-bottom:14px}
+  .tab{flex:1;border:1px solid var(--line);background:var(--card-2);color:var(--muted);border-radius:11px;padding:10px 4px;font-size:13px;font-weight:700;cursor:pointer}
+  .tab.on{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
+  .range{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .rbtn{border:1px solid var(--line);background:var(--card-2);color:var(--text);border-radius:99px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  .rbtn.on{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
+  .acc{display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  /* Stat cards */
+  .gtitle{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:18px 2px 8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+  .scard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;position:relative}
+  .scard .lab{font-size:11.5px;color:var(--muted);font-weight:600;padding-right:20px;line-height:1.3}
+  .scard .val{font-size:24px;font-weight:800;margin-top:5px}
+  .scard .sub{font-size:11.5px;font-weight:700;margin-top:3px}
+  .scard .sub.up{color:var(--ok)} .scard .sub.down{color:#e5484d} .scard .sub.flat{color:var(--muted)}
+  .scard .stk{font-size:10px;color:var(--muted);font-weight:700;background:var(--card-2);border-radius:5px;padding:1px 6px;display:inline-block;margin-top:4px}
+  .i{position:absolute;top:9px;right:9px;width:19px;height:19px;border-radius:50%;border:1.4px solid var(--line);color:var(--muted);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1}
+  .i.inl{position:static;display:inline-flex;vertical-align:middle;margin-left:4px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-size:11.5px;font-weight:700}
+  .sg{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+  .sg .who{font-weight:700} .sg .rt{color:var(--gold);font-weight:800;margin-left:4px}
+  .load{display:flex;align-items:center;justify-content:center;gap:10px;padding:30px;color:var(--muted);font-weight:600}
+  .spin{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--accent);animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  /* Tooltip sheet */
+  .sheet{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+  .sheet-in{background:var(--card);border-radius:16px;padding:20px;max-width:460px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+  .sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .x{cursor:pointer;color:var(--muted);font-size:20px;padding:2px 6px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login">
+  <div class="card">
+    <h1 style="text-align:center">👑 Seyly Admin</h1>
+    <p class="muted" style="text-align:center;font-size:13px;margin:4px 0 16px">Kirish uchun login va parol</p>
+    <input id="lgUser" placeholder="Login" autocomplete="username">
+    <input id="lgPass" type="password" placeholder="Parol" autocomplete="current-password">
+    <div id="loginErr"></div>
+    <button class="btn primary" style="width:100%" onclick="doLogin()">Kirish</button>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="dash" class="wrap" style="display:none">
+  <div class="topbar">
+    <div><h1>👑 Admin panel</h1><span class="muted" style="font-size:12.5px">Seyly boshqaruv</span></div>
+    <button class="btn ghost" onclick="logout()">Chiqish</button>
+  </div>
+  <div class="tabs">
+    <button class="tab on" id="t-stats" onclick="tab('stats')">📊 Statistika</button>
+    <button class="tab" id="t-ads" onclick="tab('ads')">📣 Reklama</button>
+    <button class="tab" id="t-up" onclick="tab('up')">📥 Upload</button>
+  </div>
+
+  <!-- Statistika -->
+  <div id="tab-stats">
+    <div class="range">
+      <button class="rbtn" data-r="1" onclick="setRange(1)">Bugun</button>
+      <button class="rbtn" data-r="3" onclick="setRange(3)">3 kun</button>
+      <button class="rbtn on" data-r="7" onclick="setRange(7)">7 kun</button>
+      <button class="rbtn" data-r="15" onclick="setRange(15)">15 kun</button>
+      <button class="rbtn" data-r="30" onclick="setRange(30)">30 kun</button>
+    </div>
+    <div id="statsBody"><div class="load"><span class="spin"></span> Yuklanmoqda…</div></div>
+  </div>
+
+  <!-- Reklama -->
+  <div id="tab-ads" style="display:none">
+    <div class="card" style="text-align:center;padding:40px 16px">
+      <div style="font-size:44px;margin-bottom:8px">📣</div>
+      <b>Reklama boshqaruvi</b>
+      <p class="muted" style="font-size:13px;margin-top:6px">Tez orada — banner rasm yuklash va faollashtirish.</p>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div id="tab-up" style="display:none">
+    <div class="card">
+      <b style="font-size:14px">📥 YouTube video yuklash</b>
+      <p class="muted" style="font-size:12.5px;margin:6px 0 10px">Har qatorga bitta ID yoki havola (yoki vergul bilan). Bir martada 100 tagacha.</p>
+      <textarea id="upText" rows="6" placeholder="dQw4w9WgXcQ&#10;https://youtu.be/abc123defGH&#10;https://www.youtube.com/watch?v=..."></textarea>
+      <div class="acc">
+        <span style="font-size:13px;color:var(--muted)">Talaffuz:</span>
+        <button class="rbtn on" data-a="" onclick="upAccent('')">Belgilanmagan</button>
+        <button class="rbtn" data-a="us" onclick="upAccent('us')">🇺🇸 US</button>
+        <button class="rbtn" data-a="uk" onclick="upAccent('uk')">🇬🇧 UK</button>
+      </div>
+      <button class="btn primary" style="margin-top:12px" id="upBtn" onclick="doUpload()">Yuborish</button>
+      <div id="upOut" style="display:none;margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <b style="font-size:13.5px">Oxirgi ingest holati</b>
+      <div id="jobs" style="margin-top:8px"><p class="muted" style="font-size:12px">Statistika yuklangach ko'rinadi.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div id="sheet" class="sheet" style="display:none" onclick="closeSheet(event)">
+  <div class="sheet-in">
+    <div class="sheet-h"><b id="sheetT"></b><span class="x" onclick="closeSheet(event,true)">✕</span></div>
+    <p id="sheetD" style="font-size:14px;line-height:1.6;margin:0"></p>
+  </div>
+</div>
+
+<script>
+var API_URL = "https://ubctutftqgbgcevfziil.supabase.co/functions/v1/api";
+var TKEY = "seyly_admin_token";
+var st = { range:7, tab:'stats', upAccent:'', data:null };
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function token(){ try{ return sessionStorage.getItem(TKEY)||''; }catch(e){ return ''; } }
+function setToken(t){ try{ t?sessionStorage.setItem(TKEY,t):sessionStorage.removeItem(TKEY); }catch(e){} }
+
+function apiAdmin(action, extra){
+  return fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(Object.assign({action:action, token:token()}, extra||{}))
+  }).then(function(r){ return r.json().then(function(j){ return {status:r.status, j:j}; }); });
+}
+
+/* ---- Login ---- */
+function doLogin(){
+  var u=document.getElementById('lgUser').value.trim();
+  var p=document.getElementById('lgPass').value;
+  document.getElementById('loginErr').textContent='';
+  apiAdmin('admin_login',{user:u,pass:p}).then(function(res){
+    if(res.j && res.j.ok && res.j.token){ setToken(res.j.token); showDash(); }
+    else document.getElementById('loginErr').textContent='Login yoki parol noto‘g‘ri';
+  }).catch(function(){ document.getElementById('loginErr').textContent='Internet xatosi'; });
+}
+function logout(){ setToken(''); document.getElementById('dash').style.display='none'; document.getElementById('login').style.display='block'; }
+function showDash(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('dash').style.display='block';
+  tab(st.tab); loadStats();
+}
+
+/* ---- Tabs ---- */
+function tab(name){ st.tab=name;
+  ['stats','ads','up'].forEach(function(x){
+    document.getElementById('tab-'+x).style.display=(x===name)?'block':'none';
+    document.getElementById('t-'+x).classList.toggle('on', x===name);
+  });
+}
+function setRange(r){ st.range=r;
+  document.querySelectorAll('#tab-stats .rbtn').forEach(function(b){ b.classList.toggle('on', Number(b.dataset.r)===r); });
+  loadStats();
+}
+
+/* ---- Stats ---- */
+function loadStats(){
+  var body=document.getElementById('statsBody');
+  body.innerHTML='<div class="load"><span class="spin"></span> Yuklanmoqda…</div>';
+  apiAdmin('admin_stats',{range:st.range}).then(function(res){
+    if(res.status===401){ logout(); return; }
+    if(!res.j || res.j.error){ body.innerHTML='<div class="card" style="text-align:center;color:var(--muted)">Xatolik: '+esc((res.j&&res.j.error)||'—')+'</div>'; return; }
+    st.data=res.j; renderStats(res.j); renderJobs(res.j.transcript);
+  }).catch(function(){ body.innerHTML='<div class="card" style="text-align:center;color:var(--muted)">Internet xatosi</div>'; });
+}
+function delta(cur,prev){ cur=Number(cur)||0; prev=Number(prev)||0;
+  if(prev===0) return cur>0?{c:'up',t:'▲ yangi'}:{c:'flat',t:'—'};
+  var pct=Math.round((cur-prev)/prev*100);
+  if(pct>0) return {c:'up',t:'▲ +'+pct+'%'};
+  if(pct<0) return {c:'down',t:'▼ '+pct+'%'};
+  return {c:'flat',t:'0%'};
+}
+function card(lab,val,info,subHtml){
+  return '<div class="scard"><span class="i" onclick="sheet(\''+info+'\')">!</span>'+
+    '<div class="lab">'+lab+'</div><div class="val">'+val+'</div>'+(subHtml||'')+'</div>';
+}
+function renderStats(d){
+  var h='';
+  GROUPS.forEach(function(g){
+    h+='<div class="gtitle">'+g.title+'</div><div class="grid">';
+    g.items.forEach(function(it){
+      var v=it.get(d); var suf=(it.pct?'%':(it.suffix||''));
+      var val=(v==='—'||v==null)?'—':(v+suf);
+      var sub;
+      if(it.kind==='flow' && it.prev){ var dl=delta(it.get(d),it.prev(d)); sub='<div class="sub '+dl.c+'">'+dl.t+'</div>'; }
+      else sub='<div class="stk">holat</div>';
+      h+=card(it.lab,val,it.info,sub);
+    });
+    h+='</div>';
+  });
+  // Kohortlar
+  h+='<div class="gtitle">Kohortlar (retensiya) <span class="i inl" onclick="sheet(\'cohorts\')">!</span></div>';
+  if(d.cohorts && d.cohorts.length){
+    h+='<div class="card" style="padding:6px 12px"><table><tr><th>Hafta</th><th>Hajm</th><th>D1</th><th>D7</th><th>D30</th></tr>';
+    d.cohorts.forEach(function(c){ h+='<tr><td>'+String(c.wk).slice(5)+'</td><td>'+c.size+'</td><td>'+(c.d1==null?'—':c.d1+'%')+'</td><td>'+(c.d7==null?'—':c.d7+'%')+'</td><td>'+(c.d30==null?'—':c.d30+'%')+'</td></tr>'; });
+    h+='</table></div>';
+  } else h+='<div class="card" style="color:var(--muted);font-size:13px">Hali kohort ma’lumoti yo‘q.</div>';
+  // Streak
+  if(d.stock && d.stock.streak_dist){ var sd=d.stock.streak_dist;
+    h+='<div class="gtitle">Streak taqsimoti <span class="i inl" onclick="sheet(\'streak\')">!</span></div>';
+    h+='<div class="card" style="padding:6px 12px"><table><tr><th>0</th><th>1-3</th><th>4-7</th><th>8-30</th><th>30+</th></tr><tr><td>'+(sd['0']||0)+'</td><td>'+(sd['1_3']||0)+'</td><td>'+(sd['4_7']||0)+'</td><td>'+(sd['8_30']||0)+'</td><td>'+(sd['30p']||0)+'</td></tr></table></div>';
+  }
+  // Video bazasi
+  if(d.transcript){ var tr=d.transcript, ing=tr.ingest||{};
+    h+='<div class="gtitle">Video bazasi <span class="i inl" onclick="sheet(\'videos\')">!</span></div><div class="grid">';
+    h+=card('Jami video',(tr.videos_total||0),'videos','<div class="stk">teglangan: '+(tr.videos_tagged||0)+'</div>');
+    h+='<div class="scard"><span class="i" onclick="sheet(\'ingest_health\')">!</span><div class="lab">Ingest holati</div><div class="val" style="font-size:15px;margin-top:7px">✅'+(ing.done||0)+' · ⏳'+(ing.queued||0)+' · ❌'+(ing.failed||0)+'</div><div class="stk">transkriptsiz: '+(ing.no_transcript||0)+'</div></div>';
+    h+='</div>';
+  } else h+='<div class="gtitle">Video bazasi</div><div class="card" style="color:var(--muted);font-size:13px">Transcript servis bilan aloqa yo‘q.</div>';
+  // Takliflar
+  h+='<div class="gtitle">So‘nggi takliflar</div>';
+  if(d.suggestions && d.suggestions.length){
+    d.suggestions.forEach(function(s){ h+='<div class="sg"><span class="who">'+esc(s.who||'user')+'</span><span class="rt">'+(s.rating||'—')+'/10</span><div style="margin-top:4px">'+esc(s.text||'')+'</div></div>'; });
+  } else h+='<div class="card" style="color:var(--muted);font-size:13px">Hali taklif yo‘q.</div>';
+  document.getElementById('statsBody').innerHTML=h;
+}
+function renderJobs(tr){
+  var el=document.getElementById('jobs'); if(!el) return;
+  if(!tr || !tr.last_jobs || !tr.last_jobs.length){ el.innerHTML='<p class="muted" style="font-size:12px">Ma’lumot yo‘q.</p>'; return; }
+  var ic={done:'✅',failed:'❌',queued:'⏳',running:'🔄',no_transcript:'🚫'};
+  var h='<table><tr><th>Video</th><th>Holat</th></tr>';
+  tr.last_jobs.forEach(function(j){ h+='<tr><td style="font-family:monospace;font-size:11.5px">'+esc(j.video_ref||j.video_id||'—')+'</td><td>'+(ic[j.status]||'')+' '+esc(j.status||'')+'</td></tr>'; });
+  el.innerHTML=h+'</table>';
+}
+
+/* ---- Tooltip ---- */
+function sheet(k){ var i=INFO[k]; if(!i) return;
+  document.getElementById('sheetT').textContent=i.t; document.getElementById('sheetD').textContent=i.d;
+  document.getElementById('sheet').style.display='flex';
+}
+function closeSheet(e,f){ if(f||e.target===document.getElementById('sheet')) document.getElementById('sheet').style.display='none'; }
+
+/* ---- Upload ---- */
+function upAccent(a){ st.upAccent=a;
+  document.querySelectorAll('#tab-up .rbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.a===a); });
+}
+function doUpload(){
+  var raw=document.getElementById('upText').value||'';
+  var vids=raw.split(/[\s,]+/).map(function(x){return x.trim();}).filter(Boolean).slice(0,100);
+  if(!vids.length){ alert('Video ID yoki havola kiriting'); return; }
+  var btn=document.getElementById('upBtn'); btn.disabled=true; btn.textContent='Yuborilmoqda…';
+  var out=document.getElementById('upOut'); out.style.display='none';
+  apiAdmin('admin_ingest',{videos:vids, accent:st.upAccent||undefined}).then(function(res){
+    btn.disabled=false; btn.textContent='Yuborish';
+    if(res.status===401){ logout(); return; }
+    var j=res.j||{};
+    if(j.ok===false){ out.style.display='block'; out.innerHTML='<div class="card" style="color:#e5484d">Ingest xatosi. Qayta urinib ko‘ring.</div>'; return; }
+    out.style.display='block';
+    out.innerHTML='<div class="card" style="font-size:13.5px;line-height:1.8">'+
+      '✅ Navbatga qo‘shildi: <b>'+(j.queued||0)+'</b><br>'+
+      '♻️ Allaqachon bor: <b>'+(j.dedup||0)+'</b><br>'+
+      (j.invalid?'⚠️ Noto‘g‘ri: <b>'+j.invalid+'</b><br>':'')+
+      '<span class="muted" style="font-size:12px">Worker har ~15 daqiqada navbatni bo‘shatadi.</span></div>';
+    document.getElementById('upText').value='';
+  }).catch(function(){ btn.disabled=false; btn.textContent='Yuborish'; alert('Internet xatosi'); });
+}
+
+/* ---- Metrika lug'ati (tooltip) ---- */
+var INFO={
+  wal:{t:"WAL — Haftalik faol o'quvchilar",d:"Oxirgi 7 kunda kamida 1 ta ibora o'rgangan userlar. Shimoliy Yulduz metrikamiz — o'sish va haqiqiy foydani bitta raqamda ko'rsatadi. Doim 7 kunlik oyna."},
+  signups:{t:"Yangi userlar",d:"Tanlangan davrda ro'yxatdan o'tganlar. Marketing kampaniya ta'siri shu yerda ko'rinadi. ▲/▼ — oldingi teng davr bilan farq."},
+  active_users:{t:"Faol userlar",d:"Davrda kamida bitta amal (ibora/qidiruv/define) qilganlar."},
+  learned:{t:"O'rganilgan iboralar",d:"Davrda o'rganilgan iboralar umumiy soni."},
+  saved_words:{t:"Saqlangan so'zlar",d:"Davrda saqlangan so'zlar. Qidiruv foydali bo'lyaptimi — signal."},
+  redemptions:{t:"Ishlatilgan kodlar",d:"Davrda faollashtirilgan Pro kodlar."},
+  feedback:{t:"Otzivlar",d:"Davr bahosi (1-10) va otziv o'rtachasi. O'rtacha <6 bo'lsa signal."},
+  limit_hits:{t:"Limitga urilish",d:"Kuniga bepul limitni (5 ibora) to'liq ishlatgan bepul userlar. Ko'p bo'lsa — Pro'ga tayyor auditoriya."},
+  en_ingest:{t:"YouGlish → baza so'rovlar",d:"Davrda YouGlish orqali bazamizga qo'shishga so'ralgan yangi videolar. Vaqt bilan kamayishi = o'z baza qamrovi o'sayapti (bu yaxshi)."},
+  onboarded_pct:{t:"Onboarding tugatganlar %",d:"Botni ochib onboardingni oxirigacha bajarganlar ulushi. <30% bo'lsa onboarding og'ir."},
+  dau:{t:"DAU — Kunlik faollar",d:"Oxirgi 24 soatda ilovaga kirgan userlar."},
+  dau_wal:{t:"DAU/WAL — Odat kuchi",d:"Kunlik faollar / haftalik faollar. >0.4 bo'lsa kuchli odat (deyarli har kuni kiradi)."},
+  activation:{t:"Birinchi kun aktivatsiyasi",d:"Onboarding tugatganlar orasidan birinchi 24 soatda kamida 1 ibora o'rganganlar. 'Aha' momenti bormi. >50% yaxshi."},
+  pro_active:{t:"Faol Pro'lar",d:"Hozir amal qilayotgan Pro obunachilar."},
+  redemption_rate:{t:"Kod ishlatilish darajasi",d:"Yaratilgan kodlarning qanchasi ishlatildi. Kanal samarasi. >40% yaxshi."},
+  free_to_pro:{t:"Free → Pro konversiya",d:"Ro'yxatdan o'tganlarning Pro'ga aylangan ulushi. Freemium standarti 2–5%."},
+  avg_daily:{t:"O'rtacha kunlik iboralar",d:"Faol user kuniga o'rtacha nechta ibora oladi. ~5 ga yaqin = limitga uriladi (Pro signal)."},
+  streak:{t:"Streak taqsimoti",d:"Ketma-ket kunlar bo'yicha userlar. 7+ kunlik userlar — yadro auditoriya, retensiya tayanchi."},
+  blocked:{t:"Botni bloklaganlar",d:"Telegram botni bloklagan userlar. Push yetkazishga ta'sir qiladi."},
+  cache:{t:"AI kesh samarasi",d:"So'z ma'nolarining keshdan (qayta AI'siz) berilgan ulushi. >70% = Claude puli tejalyapti."},
+  cohorts:{t:"Kohort retensiyasi",d:"Har hafta ro'yxatdan o'tganlarning 1/7/30 kun keyin qaytgan ulushi. Mahsulot yopishqoqligining asosiy o'lchovi."},
+  videos:{t:"Video bazasi",d:"O'z bazamizdagi ingliz videolar va teglanganlari (transcript-service)."},
+  ingest_health:{t:"Ingest salomatligi",d:"Video qo'shish konveyeri holati: done/navbatda/failed. failed o'ssa — transcriptapi yoki kalit muammosi."}
+};
+/* ---- Kartalar konfiguratsiyasi ---- */
+var GROUPS=[
+  {title:"O'sish",items:[
+    {info:'wal',kind:'stock',lab:"Haftalik faol (WAL)",get:function(d){return d.stock.wal;}},
+    {info:'signups',kind:'flow',lab:"Yangi userlar",get:function(d){return d.flow.cur.signups;},prev:function(d){return d.flow.prev.signups;}},
+    {info:'onboarded_pct',kind:'stock',lab:"Onboarding %",get:function(d){return d.stock.onboarded_pct;},pct:true},
+    {info:'activation',kind:'stock',lab:"1-kun aktivatsiya %",get:function(d){return d.stock.activation_first_lesson_pct;},pct:true}
+  ]},
+  {title:"Faollik",items:[
+    {info:'dau',kind:'stock',lab:"DAU",get:function(d){return d.stock.dau;}},
+    {info:'dau_wal',kind:'stock',lab:"DAU/WAL",get:function(d){return d.stock.wal?Math.round(100*d.stock.dau/d.stock.wal)/100:0;}},
+    {info:'active_users',kind:'flow',lab:"Faol userlar",get:function(d){return d.flow.cur.active_users;},prev:function(d){return d.flow.prev.active_users;}},
+    {info:'learned',kind:'flow',lab:"O'rganilgan iboralar",get:function(d){return d.flow.cur.learned;},prev:function(d){return d.flow.prev.learned;}},
+    {info:'avg_daily',kind:'stock',lab:"O'rtacha kunlik ibora",get:function(d){return d.stock.avg_daily_phrases;}},
+    {info:'limit_hits',kind:'flow',lab:"Limitga urilish",get:function(d){return d.flow.cur.limit_hits;},prev:function(d){return d.flow.prev.limit_hits;}}
+  ]},
+  {title:"Pul",items:[
+    {info:'pro_active',kind:'stock',lab:"Faol Pro'lar",get:function(d){return d.stock.pro_active;}},
+    {info:'redemptions',kind:'flow',lab:"Ishlatilgan kodlar",get:function(d){return d.flow.cur.redemptions;},prev:function(d){return d.flow.prev.redemptions;}},
+    {info:'redemption_rate',kind:'stock',lab:"Kod ishlatilishi %",get:function(d){return d.stock.redemption_rate_pct;},pct:true},
+    {info:'free_to_pro',kind:'stock',lab:"Free → Pro %",get:function(d){return d.stock.free_to_pro_pct;},pct:true}
+  ]},
+  {title:"Sifat va kontent",items:[
+    {info:'feedback',kind:'flow',lab:"Otziv o'rtachasi",get:function(d){return d.flow.cur.feedback_avg==null?'—':d.flow.cur.feedback_avg;},prev:function(d){return d.flow.prev.feedback_avg;},suffix:'/10'},
+    {info:'saved_words',kind:'flow',lab:"Saqlangan so'zlar",get:function(d){return d.flow.cur.saved_words;},prev:function(d){return d.flow.prev.saved_words;}},
+    {info:'cache',kind:'stock',lab:"AI kesh samarasi %",get:function(d){return d.stock.define_cache_ratio_pct;},pct:true},
+    {info:'en_ingest',kind:'flow',lab:"YouGlish→baza so'rov",get:function(d){return d.flow.cur.en_ingest_requests;},prev:function(d){return d.flow.prev.en_ingest_requests;}},
+    {info:'blocked',kind:'stock',lab:"Bloklaganlar",get:function(d){return d.stock.blocked;}}
+  ]}
+];
+
+/* Boshlanish: token bo'lsa dashboard, yo'q bo'lsa login */
+if(token()) showDash(); else document.getElementById('login').style.display='block';
+document.getElementById('lgPass').addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
