@@ -49,6 +49,9 @@
   .opt{display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--line);border-radius:15px;padding:14px;margin-bottom:10px;cursor:pointer;font-size:14px;font-weight:600}
   .opt .em{font-size:22px}
   .opt.sel{border-color:var(--accent);background:linear-gradient(135deg,rgba(91,140,255,.14),rgba(139,91,255,.10))}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:4px}
+  .chip{background:var(--card-2);border:1.5px solid var(--line);border-radius:99px;padding:9px 15px;font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+  .chip.sel{background:linear-gradient(135deg,var(--accent),var(--accent-2));border-color:transparent;color:#fff}
   .opt small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:2px}
 
   /* ---- home ---- */
@@ -555,6 +558,35 @@ var OB_LEARN_LANGS = [
   {v:'en-uk', lang:'en', accent:'uk', em:'🇬🇧', t:'Ingliz tili — UK', s:'Britaniyacha talaffuz'},
   {v:'de',    lang:'de', accent:null, em:'🇩🇪', t:'Nemis tili',       s:'400 ta ibora tayyor'}
 ];
+/* Qiziqishlar — KEY = transcript taksonomiya tegi (o'zgarmas, video filtriga mos),
+   yorliq esa i18n orqali tarjima qilinadi (hozir uz; kelajakda ru/kz/zh qo'shiladi).
+   Yorliqni t() manba-kalit sifatida ishlatamiz — yangi til = I18N lug'atini to'ldirish. */
+var INTERESTS = [
+  {key:'daily_life',          em:'☕',  label:'Kundalik hayot'},
+  {key:'travel',              em:'✈️',  label:'Sayohat'},
+  {key:'food_cooking',        em:'🍳',  label:'Ovqat va oshxona'},
+  {key:'business',            em:'💼',  label:'Biznes'},
+  {key:'technology',          em:'💻',  label:'Texnologiya'},
+  {key:'science',             em:'🔬',  label:'Fan'},
+  {key:'health_fitness',      em:'💪',  label:'Salomatlik va sport'},
+  {key:'education',           em:'🎓',  label:'Ta\'lim'},
+  {key:'entertainment',       em:'🎉',  label:'Ko\'ngilochar'},
+  {key:'movies_tv',           em:'🎬',  label:'Kino va seriallar'},
+  {key:'music',               em:'🎵',  label:'Musiqa'},
+  {key:'sports',              em:'⚽',  label:'Sport'},
+  {key:'news_politics',       em:'📰',  label:'Yangiliklar va siyosat'},
+  {key:'history',             em:'📜',  label:'Tarix'},
+  {key:'culture_society',     em:'🌍',  label:'Madaniyat va jamiyat'},
+  {key:'relationships',       em:'❤️',  label:'Munosabatlar'},
+  {key:'fashion_beauty',      em:'💄',  label:'Moda va go\'zallik'},
+  {key:'finance_money',       em:'💰',  label:'Moliya va pul'},
+  {key:'nature_animals',      em:'🌿',  label:'Tabiat va hayvonlar'},
+  {key:'gaming',              em:'🎮',  label:'O\'yinlar'},
+  {key:'comedy_humor',        em:'😂',  label:'Hazil va kulgu'},
+  {key:'motivation_selfhelp', em:'🌟',  label:'Motivatsiya'},
+  {key:'art_design',          em:'🎨',  label:'San\'at va dizayn'},
+  {key:'kids_family',         em:'👨‍👩‍👧', label:'Bolalar va oila'}
+];
 /* CEFR darajalari (A1–C2). Qiymatlar: a1..c2. Backend hozircha eski qiymatlarni
    kutadi — bazani keyin moslaymiz (sanitizeLevels). Hozir faqat UI. */
 var LEVEL_OPTS = [
@@ -578,6 +610,8 @@ var OB_STEPS = [
            {v:"daily",em:"🗣️", t:"Kundalik muloqot", s:"Bozor, transport, do'kon"},
            {v:"study",em:"🎓", t:"O'qish / ta'lim", s:"Universitet, imtihonlar"},
            {v:"self", em:"✨", t:"O'zim uchun", s:"Qiziqish, rivojlanish, filmlar"} ], key:"goal", multi:false },
+  { title:"Qiziqishlaringizni tanlang", sub:"Sizga eng mos videolarni birinchi ko'rsatamiz. Bir nechtasini tanlang.",
+    interestPick:true, key:"interests" },
   { title:"Kuniga nechta ibora?", sub:"Oz-ozdan, lekin har kuni — eng samarali yo'l.",
     opts:[ {v:5,  em:"🙂", t:"5 ta — yengil", s:"Bepul rejaga to'liq mos"},
            {v:10, em:"💪", t:"10 ta — faol", s:"Bepulda 5 tagacha, Pro bilan to'liq"},
@@ -620,6 +654,19 @@ function renderOb(){
     return;
   }
 
+  /* Qiziqishlar — chip/pill ko'rinishi (skrindagidek). KEY saqlanadi, yorliq tarjima. */
+  if(st.interestPick){
+    h+='<div class="chips">';
+    INTERESTS.forEach(function(o){
+      var sel = ob.interests.indexOf(o.key)>=0;
+      h+='<span class="chip'+(sel?' sel':'')+'" onclick="obPickInterest(\''+o.key+'\')">'+t(o.label)+'</span>';
+    });
+    h+='</div>';
+    h+='<div style="height:12px"></div><button class="btn primary" onclick="obNext()">'+t('Davom etish →')+'</button>';
+    document.getElementById('obStep').innerHTML=h;
+    return;
+  }
+
   /* O'rganish tillari (ingliz accent US/UK alohida) */
   if(st.langLearnPick){
     OB_LEARN_LANGS.forEach(function(o){
@@ -650,6 +697,11 @@ function renderOb(){
      (ob.step===OB_STEPS.length-1?t("🚀 Boshlash"):t("Davom etish →"))+'</button>';
   document.getElementById('obStep').innerHTML=h;
   window._obOpts=opts;
+}
+function obPickInterest(key){
+  var ix=ob.interests.indexOf(key);
+  if(ix>=0) ob.interests.splice(ix,1); else ob.interests.push(key);
+  renderOb();
 }
 function obPickLearn(v){
   var o=null; for(var i=0;i<OB_LEARN_LANGS.length;i++) if(OB_LEARN_LANGS[i].v===v){ o=OB_LEARN_LANGS[i]; break; }
@@ -688,6 +740,8 @@ function obNext(){
     if(!allSet){ toast(t("Har bir til uchun darajani tanlang 🙂")); return; }
   } else if(st.langLearnPick){
     if(ob.langs.length===0){ toast(t("Kamida bitta til tanlang 🙂")); return; }
+  } else if(st.interestPick){
+    if(ob.interests.length===0){ toast(t("Kamida bitta qiziqish tanlang 🙂")); return; }
   } else if(!st.langPick && (st.multi ? ob[st.key].length===0 : (ob[st.key]===null||ob[st.key]===undefined))){
     toast(t("Iltimos, tanlang 🙂")); return;
   }
