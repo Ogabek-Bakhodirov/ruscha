@@ -503,6 +503,10 @@ function langInfo(c){ for(var i=0;i<LANGS.length;i++) if(LANGS[i].code===c) retu
 /* O'z transkript-korpusimiz (Seyly pleyer) bor tillar: ingliz + rus.
    Boshqalar (nemis) YouGlish'da ochiladi. */
 function hasCorpus(c){ return c==='en' || c==='ru'; }
+/* Oxirgi qidiruv natijasi qaysi tilda topilgani (fallback bo'lishi mumkin):
+   define va saqlash shu tilga moslanadi. null = joriy til (S.curLang). */
+var searchLang=null;
+function effSearchLang(){ return searchLang || S.curLang; }
 /* Kategoriyalar — barcha tillar uchun bir xil tuzilma */
 var CAT_META=[
   {key:"salomlashish", title:"Salomlashish va tanishuv", emoji:"👋"},
@@ -1255,6 +1259,7 @@ function doSearch(){
   resetDaily();
   var q=document.getElementById('sInput').value.trim();
   if(!q){ toast(t("So'z yozing 🙂")); return; }
+  searchLang=S.curLang;   // default: joriy til (korpus fallback buni yangilashi mumkin)
   var _dc=document.getElementById('sDefine'); if(_dc) _dc.style.display='none';  // eski ma'nolarni yopamiz
 
   if(SERVER){
@@ -1270,10 +1275,15 @@ function doSearch(){
         searchBusy=false;
         if(res && res.error==='limit'){ hideSearchLoading(); if(typeof res.searchCount==='number') S.sCount=res.searchCount; renderSearchMeta(); toast(t("Bugungi bepul qidiruvlar tugadi")); return; }
         if(res && res.ok){
-          if(!S.pro) S.sCount++;   // server 1 taga oshirdi (*_search ichida)
+          if(!S.pro) S.sCount++;   // server 1 taga oshirdi (*_search ichida, fallback qayta hisoblamaydi)
+          /* Natija qaysi tilda topildi — fallback bo'lsa boshqa til. Pleyer, lug'at,
+             saqlash shu tilga moslanadi. Topilmasa joriy til (S.curLang) qoladi. */
+          var eff=(res.lang && hasCorpus(res.lang)) ? res.lang : S.curLang;
+          searchLang=eff;
+          if(eff!==S.curLang){ toast(langInfo(eff).flag+' '+t("so'z shu tildan topildi")); }
           save(); renderSearchMeta(); loadDefine(q);
-          if(res.results && res.results.length){ openSeylyPlayer(res.results, q, null, lang); }
-          else { runSearchWidget(q); }
+          if(res.results && res.results.length){ openSeylyPlayer(res.results, q, null, eff); }
+          else { searchLang=S.curLang; runSearchWidget(q); }
         } else { hideSearchLoading(); toast(t("Xatolik — qayta urinib ko'ring")); }
       }).catch(function(){ searchBusy=false; hideSearchLoading(); toast(t("Internet xatosi")); });
       return;
@@ -1306,7 +1316,7 @@ function loadDefine(q){
   el.className='defcard loading';
   el.style.display='block';
   el.innerHTML=t('📖 Ma\'nolar tayyorlanmoqda…');
-  api('define',{q:q, lang:S.curLang}).then(function(res){
+  api('define',{q:q, lang:effSearchLang()}).then(function(res){
     defBusy=false;
     if(res && res.ok && res.def && res.def.senses && res.def.senses.length){
       renderDefine(res.def);
@@ -1320,14 +1330,14 @@ function renderDefine(d){
   var el=document.getElementById('sDefine'); if(!el) return;
   curDef=d;
   el.className='defcard';
-  var key=savedKey(S.curLang, d.word||'');
+  var key=savedKey(effSearchLang(), d.word||'');
   var on=!!S.saved[key];
   var h='<div class="def-head"><span class="def-word">'+escHtml(d.word||'')+'</span>'+
         (d.translit?'<span class="def-tr">['+escHtml(d.translit)+']</span>':'')+
         (d.pos?'<span class="def-pos">'+escHtml(d.pos)+'</span>':'')+
         '<button class="ig-save'+(on?' on':' pulse')+'" id="defSaveBtn" onclick="toggleSaveCur()" aria-label="'+(on?'Saqlangan':'Saqlash')+'">'+
           saveBtnInner(on)+'</button></div>'+
-        '<p class="def-sub">'+t("Ma'nolari")+' '+langInfo(S.curLang).flag+'</p>';
+        '<p class="def-sub">'+t("Ma'nolari")+' '+langInfo(effSearchLang()).flag+'</p>';
   (d.senses||[]).forEach(function(s,i){
     h+='<div class="sense"><span class="sense-uz"><span class="sense-n">'+(i+1)+'</span>'+escHtml(s.uz||'')+'</span>';
     if(s.note) h+='<div class="sense-note">'+escHtml(s.note)+'</div>';
@@ -1377,8 +1387,9 @@ function saveBtnInner(on){
 }
 function toggleSaveCur(){
   if(!curDef || !curDef.word) return;
-  toggleSave(curDef.word, S.curLang, curDef);
-  var key=savedKey(S.curLang, curDef.word), on=!!S.saved[key];
+  var dl=effSearchLang();   // fallback bo'lsa topilgan til (masalan rus rejimida inglizcha so'z)
+  toggleSave(curDef.word, dl, curDef);
+  var key=savedKey(dl, curDef.word), on=!!S.saved[key];
   var b=document.getElementById('defSaveBtn');
   if(b){
     b.classList.remove('pulse');
