@@ -141,10 +141,10 @@
   .code-who{font-size:10px;color:var(--muted);margin-left:6px;font-weight:600}
   .lvl-lang{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--text);margin:14px 0 8px}
   .lvl-lang .fl{font-size:19px}
-  .lvl-row{display:flex;gap:8px}
-  .lvl-opt{flex:1;text-align:center;border:1.5px solid var(--line);background:var(--card);border-radius:13px;padding:11px 6px;cursor:pointer;transition:border-color .15s,background .15s}
-  .lvl-opt .em{font-size:20px;display:block;margin-bottom:4px}
-  .lvl-opt b{display:block;font-size:12px;color:var(--text);line-height:1.25}
+  .lvl-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .lvl-opt{text-align:center;border:1.5px solid var(--line);background:var(--card);border-radius:13px;padding:10px 5px;cursor:pointer;transition:border-color .15s,background .15s}
+  .lvl-opt .em{font-size:17px;display:block;margin-bottom:2px}
+  .lvl-opt b{display:block;font-size:15px;font-weight:800;color:var(--text);line-height:1.15;letter-spacing:.5px}
   .lvl-opt small{display:block;font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.2}
   .lvl-opt.sel{border-color:var(--accent-2);background:linear-gradient(135deg,rgba(91,140,255,.12),rgba(139,91,255,.12))}
   .lswitch{display:flex;gap:8px;margin:2px 0 12px;flex-wrap:wrap;align-items:center}
@@ -510,10 +510,15 @@ function toast(msg){
 
 /* ================== ONBOARDING ================== */
 var ob = { step:0, uiLang:'uz', langs:['ru'], levels:{}, goal:null, interests:[], daily:10 };
+/* CEFR darajalari (A1–C2). Qiymatlar: a1..c2. Backend hozircha eski qiymatlarni
+   kutadi — bazani keyin moslaymiz (sanitizeLevels). Hozir faqat UI. */
 var LEVEL_OPTS = [
-  {v:"new", em:"🌱", t:"Umuman bilmayman", s:"Noldan boshlaymiz"},
-  {v:"some",em:"🌿", t:"Bir oz bilaman", s:"Tushunaman, lekin gapirish qiyin"},
-  {v:"good",em:"🌳", t:"Yaxshi bilaman", s:"Erkin gaplashaman, boyitmoqchiman"}
+  {v:"a1", em:"🌱", t:"A1", s:"Deyarli noldan"},
+  {v:"a2", em:"🌿", t:"A2", s:"Oddiy so'zlar"},
+  {v:"b1", em:"🌳", t:"B1", s:"Oddiy suhbat"},
+  {v:"b2", em:"⭐", t:"B2", s:"Ravon gaplashaman"},
+  {v:"c1", em:"🏆", t:"C1", s:"Murakkab mavzular"},
+  {v:"c2", em:"💎", t:"C2", s:"Ona tilidek"}
 ];
 var OB_STEPS = [
   { title:"Ilova tilini tanlang", sub:"Interfeys shu tilda bo'ladi. Hozircha o'zbekcha tayyor, qolganlari tez orada.",
