@@ -732,7 +732,23 @@ function renderLangSwitch(){
          '<span class="fl">'+L.flag+'</span>'+L.name+(on?' ✓':'')+'</button>';
     });
   }
+  /* Ingliz tili tanlangan bo'lsa — talaffuz (accent) tanlagich (video qidiruvga ta'sir qiladi) */
+  if(S.curLang==='en'){
+    h+='<div style="flex-basis:100%;height:0"></div>';
+    h+='<span style="align-self:center;opacity:.6;font-size:13px;margin-right:2px">'+t('Talaffuz')+':</span>';
+    h+='<button class="lbtn'+(S.accent==='us'?' on':'')+'" onclick="setAccent(\'us\')"><span class="fl">🇺🇸</span>US</button>';
+    h+='<button class="lbtn'+(S.accent==='uk'?' on':'')+'" onclick="setAccent(\'uk\')"><span class="fl">🇬🇧</span>UK</button>';
+  }
   sw.innerHTML=h;
+}
+function setAccent(a){
+  if(a!=='us'&&a!=='uk') return;
+  if(S.accent===a) return;
+  S.accent=a; save();
+  if(SERVER) api('set_accent',{accent:a}).catch(function(){});
+  renderLangSwitch();
+  toast(t('Talaffuz: {a}',{a:a.toUpperCase()}));
+  if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
 }
 function toggleLangPanel(){ langPanelOpen=!langPanelOpen; renderLangSwitch(); }
 function switchLang(c){
