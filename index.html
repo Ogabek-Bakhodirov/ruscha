@@ -946,8 +946,19 @@ function flushYT(err){ var q=ytQueue.slice(); ytQueue=[]; q.forEach(function(f){
 var sp={results:[], q:'', idx:0, player:null, timer:null, seg:null, slow:false};
 function normTok(w){ return String(w).toLowerCase().replace(/[^a-z0-9']/g,''); }
 
+/* Har videodan faqat bitta (eng mos) segment — "Keyingi" turli videolarga o'tsin,
+   bir xil videoni ozgina siljitib qayta ko'rsatmasin. results rank bo'yicha tartiblangan. */
+function dedupByVideo(results){
+  var seen={}, out=[];
+  (results||[]).forEach(function(r){
+    if(!r || !r.video_id) return;
+    if(seen[r.video_id]) return;
+    seen[r.video_id]=1; out.push(r);
+  });
+  return out;
+}
 function openSeylyPlayer(results, q){
-  sp.results=results; sp.q=q; sp.slow=false;
+  sp.results=dedupByVideo(results); sp.q=q; sp.slow=false;
   hideYGSearch();
   renderAd();
   ensureYT(function(err){
