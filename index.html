@@ -238,18 +238,18 @@
   <div class="top">
     <div class="brand">
       <div class="logo" id="brandLogo"></div>
-      <div><h1>Seyly</h1><p id="homeSub">Har kuni gapir</p></div>
+      <div><h1>Seyly</h1><p id="homeSub" data-i18n="Har kuni gapir">Har kuni gapir</p></div>
     </div>
     <span id="proBadge" class="probadge" style="display:none">PRO</span>
   </div>
   <div class="statrow">
-    <div class="stat"><b id="stStreak">0</b><span>🔥 kun ketma-ket</span></div>
-    <div class="stat"><b id="stLearned">0</b><span>📚 o'rganilgan</span></div>
-    <div class="stat"><b id="stTotal">400</b><span>🎯 jami ibora</span></div>
+    <div class="stat"><b id="stStreak">0</b><span data-i18n="🔥 kun ketma-ket">🔥 kun ketma-ket</span></div>
+    <div class="stat"><b id="stLearned">0</b><span data-i18n="📚 o'rganilgan">📚 o'rganilgan</span></div>
+    <div class="stat"><b id="stTotal">400</b><span data-i18n="🎯 jami ibora">🎯 jami ibora</span></div>
   </div>
   <div class="quota" id="quotaBox">
     <div><span id="quotaLabel">Bugungi maqsad</span><br><b id="quotaTxt">0 / 10</b></div>
-    <button class="pill" id="quotaBtn" onclick="go('pro')">⭐ Pro</button>
+    <button class="pill" id="quotaBtn" onclick="go('pro')" data-i18n="⭐ Pro">⭐ Pro</button>
   </div>
   <div class="lswitch" id="langSwitch"></div>
   <div class="grid" id="catGrid"></div>
@@ -257,37 +257,37 @@
 
 <!-- ============ KATEGORIYA ============ -->
 <div class="page" id="pg-cat">
-  <button class="back" onclick="go('home')">← Orqaga</button>
+  <button class="back" onclick="go('home')" data-i18n="← Orqaga">← Orqaga</button>
   <div class="cat-head" id="catHead"></div>
   <div id="phList"></div>
 </div>
 
 <!-- ============ QIDIRUV ============ -->
 <div class="page" id="pg-search">
-  <h2 style="margin:2px 0 4px;font-size:20px">🔍 So'z qidirish</h2>
-  <p class="muted" style="font-size:12.5px;margin:0 0 14px">Istalgan so'z yoki iborani yozing — real videolarda qanday aytilishini va ma'nolarini ko'rasiz.</p>
+  <h2 style="margin:2px 0 4px;font-size:20px" data-i18n="🔍 So'z qidirish">🔍 So'z qidirish</h2>
+  <p class="muted" style="font-size:12.5px;margin:0 0 14px" data-i18n="Istalgan so'z yoki iborani yozing — real videolarda qanday aytilishini va ma'nolarini ko'rasiz.">Istalgan so'z yoki iborani yozing — real videolarda qanday aytilishini va ma'nolarini ko'rasiz.</p>
   <div class="searchbar">
     <input id="sInput" type="text" placeholder="Masalan: спасибо" autocomplete="off">
     <button onclick="doSearch()">🔍</button>
   </div>
-  <div style="margin-bottom:12px"><span class="pill">Bugun: <b id="sCount">0/3</b> qidiruv</span></div>
+  <div style="margin-bottom:12px"><span class="pill"><span data-i18n="Bugun:">Bugun:</span> <b id="sCount">0/3</b> <span data-i18n="qidiruv">qidiruv</span></span></div>
   <div class="ygslot" id="sSlot" style="display:none"><div id="sWidget"></div></div>
   <div class="ygctrl" id="sCtrl" style="display:none">
-    <button class="cbtn" onclick="sCtl('prev')">⏮ Oldingi</button>
-    <button class="cbtn" onclick="sCtl('slow')">🐢 Sekin</button>
-    <button class="cbtn" onclick="sCtl('next')">Keyingi ⏭</button>
+    <button class="cbtn" onclick="sCtl('prev')" data-i18n="⏮ Oldingi">⏮ Oldingi</button>
+    <button class="cbtn" onclick="sCtl('slow')" data-i18n="🐢 Sekin">🐢 Sekin</button>
+    <button class="cbtn" onclick="sCtl('next')" data-i18n="Keyingi ⏭">Keyingi ⏭</button>
   </div>
   <div class="defcard" id="sDefine" style="display:none"></div>
   <div class="lockmsg" id="sLock" style="display:none">
-    Bugungi bepul qidiruvlar tugadi 😔<br><br>
-    <button class="btn gold" onclick="go('pro')">⭐ Pro — cheksiz qidiruv</button>
+    <span data-i18n="Bugungi bepul qidiruvlar tugadi 😔">Bugungi bepul qidiruvlar tugadi 😔</span><br><br>
+    <button class="btn gold" onclick="go('pro')" data-i18n="⭐ Pro — cheksiz qidiruv">⭐ Pro — cheksiz qidiruv</button>
   </div>
 </div>
 
 <!-- ============ SAQLANGAN ============ -->
 <div class="page" id="pg-saved">
-  <h2 style="margin:2px 0 4px;font-size:20px">🔖 Saqlangan so'zlar</h2>
-  <p class="muted" style="font-size:12.5px;margin:0 0 14px">Qidiruvda saqlagan so'zlaringiz — til bo'yicha guruhlangan. Ustiga bosib ma'nosini ko'ring.</p>
+  <h2 style="margin:2px 0 4px;font-size:20px" data-i18n="🔖 Saqlangan so'zlar">🔖 Saqlangan so'zlar</h2>
+  <p class="muted" style="font-size:12.5px;margin:0 0 14px" data-i18n="Qidiruvda saqlagan so'zlaringiz — til bo'yicha guruhlangan. Ustiga bosib ma'nosini ko'ring.">Qidiruvda saqlagan so'zlaringiz — til bo'yicha guruhlangan. Ustiga bosib ma'nosini ko'ring.</p>
   <div id="savedList"></div>
 </div>
 
@@ -297,21 +297,21 @@
     <span class="spark s1">✨</span><span class="spark s2">✨</span><span class="spark s3">⭐</span>
     <div class="pro-logo" id="proHeroLogo"></div>
     <h2>Seyly <span class="pro-word">PRO</span></h2>
-    <p>Cheklovlarsiz o'rganing</p>
+    <p data-i18n="Cheklovlarsiz o'rganing">Cheklovlarsiz o'rganing</p>
   </div>
   <div id="proStatus" style="display:none"></div>
   <div class="card">
-    <div class="feat"><span class="em">♾️</span><div><b>Cheksiz yangi iboralar</b><small>Bepul: kuniga 5 ta. Pro: xohlaganingizcha.</small></div></div>
-    <div class="feat"><span class="em">🔍</span><div><b>Cheksiz qidiruv</b><small>Bepul: kuniga 3 ta. Pro: istalgan so'zni istalgancha qidiring.</small></div></div>
-    <div class="feat"><span class="em">🎬</span><div><b>Saqlangan so'zlar videosi</b><small>Saqlagan har bir so'zingizni videoda qayta ko'ring — faqat Pro'da.</small></div></div>
-    <div class="feat"><span class="em">📂</span><div><b>Barcha kategoriyalar ochiq</b><small>8 mavzu, 400 ibora — hammasi to'liq.</small></div></div>
-    <div class="feat"><span class="em">🚀</span><div><b>Yangi funksiyalarga birinchi kirish</b><small>Yangi mavzular va imkoniyatlar avval Pro'da.</small></div></div>
+    <div class="feat"><span class="em">♾️</span><div><b data-i18n="Cheksiz yangi iboralar">Cheksiz yangi iboralar</b><small data-i18n="Bepul: kuniga 5 ta. Pro: xohlaganingizcha.">Bepul: kuniga 5 ta. Pro: xohlaganingizcha.</small></div></div>
+    <div class="feat"><span class="em">🔍</span><div><b data-i18n="Cheksiz qidiruv">Cheksiz qidiruv</b><small data-i18n="Bepul: kuniga 3 ta. Pro: istalgan so'zni istalgancha qidiring.">Bepul: kuniga 3 ta. Pro: istalgan so'zni istalgancha qidiring.</small></div></div>
+    <div class="feat"><span class="em">🎬</span><div><b data-i18n="Saqlangan so'zlar videosi">Saqlangan so'zlar videosi</b><small data-i18n="Saqlagan har bir so'zingizni videoda qayta ko'ring — faqat Pro'da.">Saqlagan har bir so'zingizni videoda qayta ko'ring — faqat Pro'da.</small></div></div>
+    <div class="feat"><span class="em">📂</span><div><b data-i18n="Barcha kategoriyalar ochiq">Barcha kategoriyalar ochiq</b><small data-i18n="8 mavzu, 400 ibora — hammasi to'liq.">8 mavzu, 400 ibora — hammasi to'liq.</small></div></div>
+    <div class="feat"><span class="em">🚀</span><div><b data-i18n="Yangi funksiyalarga birinchi kirish">Yangi funksiyalarga birinchi kirish</b><small data-i18n="Yangi mavzular va imkoniyatlar avval Pro'da.">Yangi mavzular va imkoniyatlar avval Pro'da.</small></div></div>
   </div>
-  <button class="btn gold" onclick="contactPro()">💬 Pro olish — Telegram orqali yozing</button>
+  <button class="btn gold" onclick="contactPro()" data-i18n="💬 Pro olish — Telegram orqali yozing">💬 Pro olish — Telegram orqali yozing</button>
   <div class="card" style="margin-top:12px">
-    <b style="font-size:13.5px">Faollashtirish kodi bormi?</b>
+    <b style="font-size:13.5px" data-i18n="Faollashtirish kodi bormi?">Faollashtirish kodi bormi?</b>
     <div class="codebox">
-      <input id="proCode" placeholder="KODNI KIRITING">
+      <input id="proCode" placeholder="KODNI KIRITING" data-i18n-ph="KODNI KIRITING">
       <button class="btn primary" style="width:110px" onclick="applyCode()">OK</button>
     </div>
   </div>
@@ -331,10 +331,10 @@
 
 <!-- ============ NAV ============ -->
 <div class="nav" id="nav" style="display:none">
-  <button id="nav-home" onclick="go('home')"><span class="i">🏠</span>Asosiy</button>
-  <button id="nav-search" onclick="go('search')"><span class="i">🔍</span>Qidiruv</button>
-  <button id="nav-saved" onclick="go('saved')"><span class="i">🔖</span>Saqlangan</button>
-  <button id="nav-pro" onclick="go('pro')"><span class="i">⭐</span>Pro</button>
+  <button id="nav-home" onclick="go('home')"><span class="i">🏠</span><span data-i18n="Asosiy">Asosiy</span></button>
+  <button id="nav-search" onclick="go('search')"><span class="i">🔍</span><span data-i18n="Qidiruv">Qidiruv</span></button>
+  <button id="nav-saved" onclick="go('saved')"><span class="i">🔖</span><span data-i18n="Saqlangan">Saqlangan</span></button>
+  <button id="nav-pro" onclick="go('pro')"><span class="i">⭐</span><span data-i18n="Pro">Pro</span></button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -345,6 +345,40 @@ var FREE_DAILY = 5;           // bepul: kuniga yangi iboralar
 var FREE_SEARCH = 3;          // bepul: kuniga qidiruvlar
 var PRO_CONTACT = "https://t.me/bakhodirov_23";   // Pro uchun bog'lanish
 var API_URL = "https://ubctutftqgbgcevfziil.supabase.co/functions/v1/api"; // backend
+
+/* ================== INTERFEYS TILI (i18n) ==================
+   Kelajakda oson kengaytirish uchun: barcha interfeys matnlari shu qatlamdan o'tadi.
+   Hozircha faqat O'ZBEKCHA tayyor. Boshqa tillar (ru/kz/zh) tarjima lug'ati to'lgach
+   avtomatik ishlaydi — struktura tayyor, kodni qayta yozish shart emas.
+   Yondashuv: "manba matn = kalit" (source-as-key). Tarjima topilmasa — o'zbekcha
+   matnning o'zi ko'rsatiladi. Ya'ni bugun ilova aynan hozirgidek ishlaydi. */
+var UI_LANGS = [
+  { code:'uz', flag:'🇺🇿', name:"O'zbekcha", ready:true  },
+  { code:'ru', flag:'🇷🇺', name:'Русский',   ready:false },
+  { code:'kz', flag:'🇰🇿', name:'Qazaqsha',  ready:false },
+  { code:'zh', flag:'🇨🇳', name:'中文',       ready:false }
+];
+function uiLangInfo(c){ for(var i=0;i<UI_LANGS.length;i++) if(UI_LANGS[i].code===c) return UI_LANGS[i]; return UI_LANGS[0]; }
+function uiLangReady(c){ return !!uiLangInfo(c).ready; }
+/* Tarjimalar: I18N[til][manba_matn] = tarjima.
+   uz — bo'sh (manba tilning o'zi). Yangi til qo'shish: shu obyektga
+   kalit-qiymat juftlarini to'ldirish kifoya, boshqa hech narsa o'zgarmaydi. */
+var I18N = { uz:{}, ru:{}, kz:{}, zh:{} };
+function t(s, vars){
+  var lang = (typeof S !== "undefined" && S && S.uiLang) ? S.uiLang : "uz";
+  var out = (I18N[lang] && I18N[lang][s] != null) ? I18N[lang][s] : s;
+  if(vars){ for(var k in vars){ if(Object.prototype.hasOwnProperty.call(vars,k)) out = out.split("{"+k+"}").join(vars[k]); } }
+  return out;
+}
+/* Statik HTML matnlari: data-i18n (matn) / data-i18n-ph (placeholder) atributlari.
+   applyI18n() ularni joriy interfeys tiliga qarab to'ldiradi. */
+function applyI18n(root){
+  var r = root || document;
+  var els = r.querySelectorAll("[data-i18n]");
+  for(var i=0;i<els.length;i++){ els[i].textContent = t(els[i].getAttribute("data-i18n")); }
+  var ph = r.querySelectorAll("[data-i18n-ph]");
+  for(var j=0;j<ph.length;j++){ ph[j].setAttribute("placeholder", t(ph[j].getAttribute("data-i18n-ph"))); }
+}
 
 /* ================== TELEGRAM ================== */
 var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -407,7 +441,7 @@ function api(action, extra){
 }
 
 /* ================== HOLAT (localStorage) ================== */
-var DEF = { onboarded:false, level:null, levels:{}, goal:null, interests:[], daily:10, pro:false, proUntil:null,
+var DEF = { onboarded:false, uiLang:'uz', level:null, levels:{}, goal:null, interests:[], daily:10, pro:false, proUntil:null,
             langs:['ru'], curLang:'ru', saved:{},
             learned:{}, day:"", todayNew:0, sDay:"", sCount:0, streak:0, lastDay:"" };
 var S;
@@ -475,13 +509,15 @@ function toast(msg){
 }
 
 /* ================== ONBOARDING ================== */
-var ob = { step:0, langs:['ru'], levels:{}, goal:null, interests:[], daily:10 };
+var ob = { step:0, uiLang:'uz', langs:['ru'], levels:{}, goal:null, interests:[], daily:10 };
 var LEVEL_OPTS = [
   {v:"new", em:"🌱", t:"Umuman bilmayman", s:"Noldan boshlaymiz"},
   {v:"some",em:"🌿", t:"Bir oz bilaman", s:"Tushunaman, lekin gapirish qiyin"},
   {v:"good",em:"🌳", t:"Yaxshi bilaman", s:"Erkin gaplashaman, boyitmoqchiman"}
 ];
 var OB_STEPS = [
+  { title:"Ilova tilini tanlang", sub:"Interfeys shu tilda bo'ladi. Hozircha o'zbekcha tayyor, qolganlari tez orada.",
+    langPick:true, key:"uiLang" },
   { title:"Qaysi tillarni o'rganmoqchisiz?", sub:"Bir nechtasini tanlashingiz mumkin — keyin xohlagan payt almashtirasiz.",
     opts: LANGS.map(function(L){ return {v:L.code, em:L.flag, t:L.name, s:L.hint}; }),
     key:"langs", multi:true },
@@ -504,7 +540,20 @@ function renderOb(){
   var st=OB_STEPS[ob.step];
   var prog=''; for(var i=0;i<OB_STEPS.length;i++) prog+='<i class="'+(i<=ob.step?'on':'')+'"></i>';
   document.getElementById('obProg').innerHTML=prog;
-  var h='<h2 class="ob-title">'+st.title+'</h2><p class="ob-sub">'+st.sub+'</p>';
+  var h='<h2 class="ob-title">'+t(st.title)+'</h2><p class="ob-sub">'+t(st.sub)+'</p>';
+
+  /* Interfeys tili tanlash (hozircha faqat o'zbekcha faol) */
+  if(st.langPick){
+    UI_LANGS.forEach(function(L){
+      var sel = ob.uiLang===L.code;
+      h+='<div class="opt'+(sel?' sel':'')+(L.ready?'':' locked')+'" onclick="obPickLang(\''+L.code+'\','+(L.ready?'true':'false')+')">'+
+         '<span class="em">'+L.flag+'</span><div>'+L.name+'</div>'+
+         (L.ready?'':'<span class="soon" style="margin-left:auto">'+t('Tez orada')+' 🚧</span>')+'</div>';
+    });
+    h+='<div style="height:8px"></div><button class="btn primary" onclick="obNext()">'+t('Davom etish →')+'</button>';
+    document.getElementById('obStep').innerHTML=h;
+    return;
+  }
 
   /* Har bir til uchun alohida daraja */
   if(st.perLang){
@@ -515,11 +564,11 @@ function renderOb(){
       LEVEL_OPTS.forEach(function(o){
         var sel = ob.levels[code]===o.v;
         h+='<div class="lvl-opt'+(sel?' sel':'')+'" onclick="obPickLevel(\''+code+'\',\''+o.v+'\')">'+
-           '<span class="em">'+o.em+'</span><b>'+o.t+'</b><small>'+o.s+'</small></div>';
+           '<span class="em">'+o.em+'</span><b>'+t(o.t)+'</b><small>'+t(o.s)+'</small></div>';
       });
       h+='</div>';
     });
-    h+='<div style="height:8px"></div><button class="btn primary" onclick="obNext()">Davom etish →</button>';
+    h+='<div style="height:8px"></div><button class="btn primary" onclick="obNext()">'+t('Davom etish →')+'</button>';
     document.getElementById('obStep').innerHTML=h;
     return;
   }
@@ -532,15 +581,19 @@ function renderOb(){
     : st.opts;
   opts.forEach(function(o,i){
     var sel = st.multi ? ob[st.key].indexOf(o.v)>=0 : (ob[st.key]===o.v);
-    h+='<div class="opt'+(sel?' sel':'')+'" onclick="obPick('+i+')"><span class="em">'+o.em+'</span><div>'+o.t+
-       (o.s?'<small>'+o.s+'</small>':'')+'</div></div>';
+    h+='<div class="opt'+(sel?' sel':'')+'" onclick="obPick('+i+')"><span class="em">'+o.em+'</span><div>'+t(o.t)+
+       (o.s?'<small>'+t(o.s)+'</small>':'')+'</div></div>';
   });
   h+='<div style="height:8px"></div><button class="btn primary" onclick="obNext()">'+
-     (ob.step===OB_STEPS.length-1?"🚀 Boshlash":"Davom etish →")+'</button>';
+     (ob.step===OB_STEPS.length-1?t("🚀 Boshlash"):t("Davom etish →"))+'</button>';
   document.getElementById('obStep').innerHTML=h;
   window._obOpts=opts;
 }
 function obPickLevel(code, val){ ob.levels[code]=val; renderOb(); }
+function obPickLang(code, ready){
+  if(!ready){ toast(uiLangInfo(code).flag+" "+t('Bu til tez orada qo\'shiladi 🚧')); return; }
+  ob.uiLang=code; renderOb();
+}
 function obPick(i){
   var st=OB_STEPS[ob.step], o=window._obOpts[i];
   if(st.multi){
@@ -553,12 +606,13 @@ function obNext(){
   var st=OB_STEPS[ob.step];
   if(st.perLang){
     var allSet = ob.langs.every(function(c){ return !!ob.levels[c]; });
-    if(!allSet){ toast("Har bir til uchun darajani tanlang 🙂"); return; }
-  } else if(st.multi ? ob[st.key].length===0 : (ob[st.key]===null||ob[st.key]===undefined)){
-    toast("Iltimos, tanlang 🙂"); return;
+    if(!allSet){ toast(t("Har bir til uchun darajani tanlang 🙂")); return; }
+  } else if(!st.langPick && (st.multi ? ob[st.key].length===0 : (ob[st.key]===null||ob[st.key]===undefined))){
+    toast(t("Iltimos, tanlang 🙂")); return;
   }
   if(ob.step<OB_STEPS.length-1){ ob.step++; renderOb(); return; }
   S.onboarded=true;
+  S.uiLang = ob.uiLang || 'uz';   // interfeys tili (hozircha uz faol)
   S.levels={}; ob.langs.forEach(function(c){ if(ob.levels[c]) S.levels[c]=ob.levels[c]; });
   var primary = ob.langs.indexOf('ru')>=0 ? 'ru' : ob.langs[0];
   S.level = S.levels[primary] || null;   // eski maydonlar bilan moslik
@@ -567,12 +621,14 @@ function obNext(){
   S.curLang = primary;
   S.daily=ob.daily;   // maqsad (cheklov emas). Bepul cheklov = FREE_DAILY, alohida.
   save();
+  applyI18n();   // statik matnlarni tanlangan interfeys tiliga moslash
   if(SERVER){
-    api('onboard',{levels:S.levels, level:S.level, goal:ob.goal, interests:ob.interests, daily:ob.daily, langs:ob.langs})
+    // ui_lang'ni ham yuboramiz (backend hozircha e'tiborsiz qoldiradi — kelajak uchun)
+    api('onboard',{levels:S.levels, level:S.level, goal:ob.goal, interests:ob.interests, daily:ob.daily, langs:ob.langs, ui_lang:S.uiLang})
       .catch(function(){ /* keyingi safar qayta uriniladi */ });
   }
   go('home');
-  toast("Xush kelibsiz! Birinchi darsingiz tayyor 🎉");
+  toast(t("Xush kelibsiz! Birinchi darsingiz tayyor 🎉"));
 }
 
 /* ================== HOME ================== */
@@ -588,7 +644,7 @@ function renderHome(){
   document.getElementById('stTotal').textContent=tot;
   document.getElementById('proBadge').style.display=S.pro?'inline-block':'none';
   var g=goal(), reached=S.todayNew>=g;
-  document.getElementById('quotaLabel').textContent = reached ? "Maqsad bajarildi! 🎉" : "Bugungi maqsad";
+  document.getElementById('quotaLabel').textContent = reached ? t("Maqsad bajarildi! 🎉") : t("Bugungi maqsad");
   document.getElementById('quotaTxt').textContent = S.todayNew+" / "+g+(reached?" ✅":"");
   document.getElementById('quotaBtn').style.display=S.pro?'none':'inline-flex';
   // qiziqishlar birinchi
@@ -600,13 +656,13 @@ function renderHome(){
   order.forEach(function(c){
     var n=c.phrases.length;
     if(!n){
-      h+='<div class="cat" onclick="openCat(\''+c.key+'\')" style="opacity:.75"><div class="em">'+c.emoji+'</div><h3>'+c.title+'</h3>'+
-         '<span class="soon">Tez orada 🚧</span></div>';
+      h+='<div class="cat" onclick="openCat(\''+c.key+'\')" style="opacity:.75"><div class="em">'+c.emoji+'</div><h3>'+t(c.title)+'</h3>'+
+         '<span class="soon">'+t('Tez orada')+' 🚧</span></div>';
       return;
     }
     var done=c.phrases.filter(function(p){return S.learned[p.id];}).length;
     var pct=Math.round(done/n*100);
-    h+='<div class="cat" onclick="openCat(\''+c.key+'\')"><div class="em">'+c.emoji+'</div><h3>'+c.title+'</h3>'+
+    h+='<div class="cat" onclick="openCat(\''+c.key+'\')"><div class="em">'+c.emoji+'</div><h3>'+t(c.title)+'</h3>'+
        '<div class="cbar"><i style="width:'+pct+'%"></i></div><small>'+done+' / '+n+'</small></div>';
   });
   document.getElementById('catGrid').innerHTML=h;
@@ -643,13 +699,13 @@ function switchLang(c){
 function toggleLang(c){
   var ix=S.langs.indexOf(c);
   if(ix>=0){
-    if(S.langs.length===1){ toast("Kamida bitta til tanlangan bo'lishi kerak 🙂"); return; }
+    if(S.langs.length===1){ toast(t("Kamida bitta til tanlangan bo'lishi kerak 🙂")); return; }
     S.langs.splice(ix,1);
     if(S.curLang===c) S.curLang=S.langs[0];
   } else {
     S.langs.push(c);
     S.curLang=c;
-    toast(langInfo(c).flag+" "+langInfo(c).name+" qo'shildi!");
+    toast(t("{lang} qo'shildi!",{lang:langInfo(c).flag+" "+langInfo(c).name}));
   }
   save();
   if(SERVER) api('set_langs',{langs:S.langs}).catch(function(){});
@@ -662,11 +718,11 @@ function openCat(key){
   curCat=cats().find(function(c){return c.key===key;});
   if(!curCat) return;
   if(!curCat.phrases.length){
-    toast(langInfo(S.curLang).flag+" Bu til uchun iboralar tez orada qo'shiladi 🚧");
+    toast(langInfo(S.curLang).flag+" "+t("Bu til uchun iboralar tez orada qo'shiladi 🚧"));
     return;
   }
   document.getElementById('catHead').innerHTML=
-    '<span class="em">'+curCat.emoji+'</span><div><h2>'+curCat.title+'</h2><p>'+curCat.phrases.length+' ta ibora</p></div>';
+    '<span class="em">'+curCat.emoji+'</span><div><h2>'+t(curCat.title)+'</h2><p>'+t('{n} ta ibora',{n:curCat.phrases.length})+'</p></div>';
   var h='';
   curCat.phrases.forEach(function(p){
     var done=!!S.learned[p.id];
@@ -683,18 +739,18 @@ function showLock(id){
   var body=document.getElementById('phb-'+id);
   var g=goal(), msg;
   if(g>FREE_DAILY){
-    msg="Siz kuniga <b>"+g+" ta</b> maqsad qo'ygansiz, bepul rejada esa kuniga "+FREE_DAILY+" ta. <b>Pro</b> bilan to'liq maqsadingizga yeting 🚀";
+    msg=t("Siz kuniga <b>{g} ta</b> maqsad qo'ygansiz, bepul rejada esa kuniga {f} ta. <b>Pro</b> bilan to'liq maqsadingizga yeting 🚀",{g:g,f:FREE_DAILY});
   } else {
-    msg="Bugungi "+FREE_DAILY+" ta bepul yangi ibora tugadi 😊 Ertaga davom eting yoki Pro oling.";
+    msg=t("Bugungi {f} ta bepul yangi ibora tugadi 😊 Ertaga davom eting yoki Pro oling.",{f:FREE_DAILY});
   }
   body.innerHTML='<div class="lockmsg">'+msg+'<br><br>'+
-    '<button class="btn gold" onclick="go(\'pro\')">⭐ Pro — cheksiz o\'rganish</button></div>';
+    '<button class="btn gold" onclick="go(\'pro\')">'+t("⭐ Pro — cheksiz o'rganish")+'</button></div>';
   document.getElementById('phi-'+id).classList.add('open');
 }
 function celebrateGoal(prevNew){
   var g=goal();
   if(prevNew < g && S.todayNew >= g){
-    toast("🎉 Bugungi maqsadingizga yetdingiz! Xohlasangiz davom eting.");
+    toast(t("🎉 Bugungi maqsadingizga yetdingiz! Xohlasangiz davom eting."));
   }
 }
 function markDone(id){
@@ -708,14 +764,14 @@ function openBody(id){
     body.dataset.built='1';
     body.innerHTML='<div class="translit">'+p.tr+'</div>'+
       '<div class="row">'+
-        '<button class="sbtn v" onclick="phVideo('+id+')">▶ Videoni ko\'rish</button>'+
-        '<button class="sbtn t" onclick="speak(\''+encodeURIComponent(p.ru)+'\',\''+langInfo(p._lang||'ru').tts+'\')">🔊 Talaffuz</button>'+
+        '<button class="sbtn v" onclick="phVideo('+id+')">'+t("▶ Videoni ko'rish")+'</button>'+
+        '<button class="sbtn t" onclick="speak(\''+encodeURIComponent(p.ru)+'\',\''+langInfo(p._lang||'ru').tts+'\')">'+t("🔊 Talaffuz")+'</button>'+
       '</div>'+
       '<div class="ygslot" id="slot-'+id+'" style="display:none"></div>'+
       '<div class="ygctrl" id="ctl-'+id+'" style="display:none">'+
-        '<button class="cbtn" onclick="wCtl('+id+',\'prev\')">⏮ Oldingi</button>'+
-        '<button class="cbtn" onclick="wCtl('+id+',\'slow\')">🐢 Sekin</button>'+
-        '<button class="cbtn" onclick="wCtl('+id+',\'next\')">Keyingi ⏭</button>'+
+        '<button class="cbtn" onclick="wCtl('+id+',\'prev\')">'+t("⏮ Oldingi")+'</button>'+
+        '<button class="cbtn" onclick="wCtl('+id+',\'slow\')">'+t("🐢 Sekin")+'</button>'+
+        '<button class="cbtn" onclick="wCtl('+id+',\'next\')">'+t("Keyingi ⏭")+'</button>'+
       '</div>';
   }
   document.getElementById('phi-'+id).classList.add('open');
@@ -740,8 +796,8 @@ function togglePh(id){
         if(typeof res.todayNew==='number') S.todayNew=res.todayNew;
         if(typeof res.streak==='number') S.streak=res.streak;
         save(); markDone(id); openBody(id); celebrateGoal(prev);
-      } else toast("Xatolik — qayta urinib ko'ring");
-    }).catch(function(){ learnBusy=false; toast("Internet xatosi — qayta urinib ko'ring"); });
+      } else toast(t("Xatolik — qayta urinib ko'ring"));
+    }).catch(function(){ learnBusy=false; toast(t("Internet xatosi — qayta urinib ko'ring")); });
     return;
   }
 
@@ -782,18 +838,18 @@ function phVideo(id){
   slot.style.display='block';
   document.getElementById('ctl-'+id).style.display='flex';
   if(widgets[id]) return;
-  slot.innerHTML='<div class="ph" id="wph-'+id+'">Video yuklanmoqda…</div><div id="w-'+id+'"></div>';
+  slot.innerHTML='<div class="ph" id="wph-'+id+'">'+t("Video yuklanmoqda…")+'</div><div id="w-'+id+'"></div>';
   ensureYG(function(err){
     var ph=document.getElementById('wph-'+id);
-    if(err||!window.YG){ if(ph) ph.textContent="🎬 Video Telegram/brauzerda ochiladi."; return; }
+    if(err||!window.YG){ if(ph) ph.textContent=t("🎬 Video Telegram/brauzerda ochiladi."); return; }
     try{
       widgets[id]=new YG.Widget("w-"+id,{ width: slot.clientWidth||320, components:8,
         events:{ onFetchDone:function(d){ if(ph) ph.style.display = (d&&d.totalResult===0)?'block':'none';
-                   if(d&&d.totalResult===0&&ph) ph.textContent="Bu ibora uchun video topilmadi."; },
+                   if(d&&d.totalResult===0&&ph) ph.textContent=t("Bu ibora uchun video topilmadi."); },
                  onVideoChange:function(d){ logVideo(id, d); },
-                 onError:function(){ if(ph){ph.style.display='block';ph.textContent="Video yuklashda xatolik.";} } }});
+                 onError:function(){ if(ph){ph.style.display='block';ph.textContent=t("Video yuklashda xatolik.");} } }});
       widgets[id].fetch(p.ru, langInfo(p._lang||'ru').yg);
-    }catch(e){ if(ph) ph.textContent="🎬 Video Telegram/brauzerda ochiladi."; }
+    }catch(e){ if(ph) ph.textContent=t("🎬 Video Telegram/brauzerda ochiladi."); }
   });
 }
 function wCtl(id,act){
@@ -820,28 +876,28 @@ function renderSearchMeta(){
   var inp=document.getElementById('sInput');
   if(inp){
     var ex={ru:'спасибо', en:'thank you', de:'danke'};
-    inp.placeholder='Masalan: '+(ex[S.curLang]||ex.ru)+' '+langInfo(S.curLang).flag;
+    inp.placeholder=t('Masalan:')+' '+(ex[S.curLang]||ex.ru)+' '+langInfo(S.curLang).flag;
   }
 }
 function runSearchWidget(q){
   var slot=document.getElementById('sSlot'); slot.style.display='block';
   document.getElementById('sCtrl').style.display='flex';
   ensureYG(function(err){
-    if(err||!window.YG){ slot.innerHTML='<div class="ph">🎬 Video Telegram/brauzerda ochiladi.</div>'; return; }
+    if(err||!window.YG){ slot.innerHTML='<div class="ph">'+t("🎬 Video Telegram/brauzerda ochiladi.")+'</div>'; return; }
     try{
       if(!sWidget){
         slot.innerHTML='<div id="sW"></div>';
         sWidget=new YG.Widget("sW",{ width: slot.clientWidth||320, components:8 });
       }
       sWidget.fetch(q, langInfo(S.curLang).yg);
-    }catch(e){ slot.innerHTML='<div class="ph">Video yuklashda xatolik.</div>'; }
+    }catch(e){ slot.innerHTML='<div class="ph">'+t("Video yuklashda xatolik.")+'</div>'; }
   });
 }
 var searchBusy=false;
 function doSearch(){
   resetDaily();
   var q=document.getElementById('sInput').value.trim();
-  if(!q){ toast("So'z yozing 🙂"); return; }
+  if(!q){ toast(t("So'z yozing 🙂")); return; }
   var _dc=document.getElementById('sDefine'); if(_dc) _dc.style.display='none';  // eski ma'nolarni yopamiz
 
   if(SERVER){
@@ -849,14 +905,14 @@ function doSearch(){
     searchBusy=true;
     api('search').then(function(res){
       searchBusy=false;
-      if(res && res.error==='limit'){ if(typeof res.searchCount==='number') S.sCount=res.searchCount; renderSearchMeta(); toast("Bugungi bepul qidiruvlar tugadi"); return; }
+      if(res && res.error==='limit'){ if(typeof res.searchCount==='number') S.sCount=res.searchCount; renderSearchMeta(); toast(t("Bugungi bepul qidiruvlar tugadi")); return; }
       if(res && res.ok){ S.sCount=res.searchCount; save(); renderSearchMeta(); runSearchWidget(q); loadDefine(q); }
-      else toast("Xatolik — qayta urinib ko'ring");
-    }).catch(function(){ searchBusy=false; toast("Internet xatosi"); });
+      else toast(t("Xatolik — qayta urinib ko'ring"));
+    }).catch(function(){ searchBusy=false; toast(t("Internet xatosi")); });
     return;
   }
 
-  if(!S.pro && S.sCount>=FREE_SEARCH){ renderSearchMeta(); toast("Bugungi bepul qidiruvlar tugadi"); return; }
+  if(!S.pro && S.sCount>=FREE_SEARCH){ renderSearchMeta(); toast(t("Bugungi bepul qidiruvlar tugadi")); return; }
   S.sCount++; save(); renderSearchMeta();
   runSearchWidget(q);
 }
@@ -873,7 +929,7 @@ function loadDefine(q){
   defBusy=true;
   el.className='defcard loading';
   el.style.display='block';
-  el.innerHTML='📖 Ma\'nolar tayyorlanmoqda…';
+  el.innerHTML=t('📖 Ma\'nolar tayyorlanmoqda…');
   api('define',{q:q, lang:S.curLang}).then(function(res){
     defBusy=false;
     if(res && res.ok && res.def && res.def.senses && res.def.senses.length){
@@ -895,7 +951,7 @@ function renderDefine(d){
         (d.pos?'<span class="def-pos">'+escHtml(d.pos)+'</span>':'')+
         '<button class="ig-save'+(on?' on':' pulse')+'" id="defSaveBtn" onclick="toggleSaveCur()" aria-label="'+(on?'Saqlangan':'Saqlash')+'">'+
           saveBtnInner(on)+'</button></div>'+
-        '<p class="def-sub">Ma\'nolari '+langInfo(S.curLang).flag+'</p>';
+        '<p class="def-sub">'+t("Ma'nolari")+' '+langInfo(S.curLang).flag+'</p>';
   (d.senses||[]).forEach(function(s,i){
     h+='<div class="sense"><span class="sense-uz"><span class="sense-n">'+(i+1)+'</span>'+escHtml(s.uz||'')+'</span>';
     if(s.note) h+='<div class="sense-note">'+escHtml(s.note)+'</div>';
@@ -905,7 +961,7 @@ function renderDefine(d){
          (s.example.u?'<div class="ex-u">'+escHtml(s.example.u)+'</div>':'')+'</div>';
     }
     if(s.syn && s.syn.length){
-      h+='<div class="sense-syn"><span class="lbl">Sinonim:</span>';
+      h+='<div class="sense-syn"><span class="lbl">'+t("Sinonim:")+'</span>';
       s.syn.slice(0,5).forEach(function(w){ h+='<span class="syn-chip">'+escHtml(w)+'</span>'; });
       h+='</div>';
     }
@@ -929,7 +985,7 @@ function defInnerHtml(d){
          (s.example.u?'<div class="ex-u">'+escHtml(s.example.u)+'</div>':'')+'</div>';
     }
     if(s.syn && s.syn.length){
-      h+='<div class="sense-syn"><span class="lbl">Sinonim:</span>';
+      h+='<div class="sense-syn"><span class="lbl">'+t("Sinonim:")+'</span>';
       s.syn.slice(0,5).forEach(function(w){ h+='<span class="syn-chip">'+escHtml(w)+'</span>'; });
       h+='</div>';
     }
@@ -960,11 +1016,11 @@ function toggleSave(word, lang, def){
   var key=savedKey(lang, word);
   if(S.saved[key]){
     delete S.saved[key];
-    toast("Saqlanganlardan olib tashlandi");
+    toast(t("Saqlanganlardan olib tashlandi"));
     if(SERVER) api('unsave_word',{q:word, lang:lang}).catch(function(){});
   } else {
     S.saved[key]={ word:def.word||word, translit:def.translit||'', lang:lang, def:def, at:Date.now() };
-    toast("🔖 Saqlandi");
+    toast(t("🔖 Saqlandi"));
     if(SERVER) api('save_word',{q:word, lang:lang, def:def}).catch(function(){});
   }
   save();
@@ -977,7 +1033,7 @@ function renderSaved(){
   _svList=[];
   var keys=Object.keys(S.saved);
   if(!keys.length){
-    el.innerHTML='<div class="sv-empty"><span class="em">🔖</span>Hali saqlangan so\'z yo\'q.<br>Qidiruvda so\'z topib «Saqlash»ni bosing.</div>';
+    el.innerHTML='<div class="sv-empty"><span class="em">🔖</span>'+t("Hali saqlangan so'z yo'q.")+'<br>'+t("Qidiruvda so'z topib «Saqlash»ni bosing.")+'</div>';
     return;
   }
   // tilga qarab guruhlash
@@ -987,7 +1043,7 @@ function renderSaved(){
   LANGS.forEach(function(L){
     var arr=groups[L.code]; if(!arr || !arr.length) return;
     arr.sort(function(a,b){ return (b.at||0)-(a.at||0); });
-    h+='<div class="sv-group"><span class="fl">'+L.flag+'</span>'+L.name+'<span class="cnt">'+arr.length+' ta</span></div>';
+    h+='<div class="sv-group"><span class="fl">'+L.flag+'</span>'+L.name+'<span class="cnt">'+t('{n} ta',{n:arr.length})+'</span></div>';
     arr.forEach(function(it){
       var i=_svList.length; _svList.push(it);   // noyob indeks
       var first=(it.def && it.def.senses && it.def.senses[0] && it.def.senses[0].uz) || '';
@@ -1001,9 +1057,9 @@ function renderSaved(){
          '</div>'+
          '<div class="sv-body">'+defInnerHtml(it.def||{})+
            '<div class="sv-vid">'+(S.pro
-             ? '<button class="svid" onclick="savedVideo('+i+')">▶ Videoni ko\'rish</button>'+
+             ? '<button class="svid" onclick="savedVideo('+i+')">'+t("▶ Videoni ko'rish")+'</button>'+
                '<div class="ygslot" id="svslot-'+i+'" style="display:none;margin-top:8px"></div>'
-             : '<button class="btn gold" onclick="go(\'pro\')">🎬 Pro bilan videosini ko\'ring</button>'
+             : '<button class="btn gold" onclick="go(\'pro\')">'+t("🎬 Pro bilan videosini ko'ring")+'</button>'
            )+'</div>'+
          '</div>'+
        '</div>';
@@ -1018,7 +1074,7 @@ function removeSaved(i){
   var it=_svList[i]; if(!it) return;
   delete S.saved[it.key]; save(); renderSaved();
   if(SERVER) api('unsave_word',{q:it.word, lang:it.lang}).catch(function(){});
-  toast("O'chirildi");
+  toast(t("O'chirildi"));
 }
 /* Pro: saqlangan so'z videosini shu yerda ochish (o'z tilida) */
 function savedVideo(i){
@@ -1028,17 +1084,17 @@ function savedVideo(i){
   var slot=document.getElementById('svslot-'+i); if(!slot) return;
   slot.style.display='block';
   if(savedWidgets[i]) return;
-  slot.innerHTML='<div class="ph" id="svph-'+i+'">Video yuklanmoqda…</div><div id="svw-'+i+'"></div>';
+  slot.innerHTML='<div class="ph" id="svph-'+i+'">'+t("Video yuklanmoqda…")+'</div><div id="svw-'+i+'"></div>';
   ensureYG(function(err){
     var ph=document.getElementById('svph-'+i);
-    if(err||!window.YG){ if(ph) ph.textContent="🎬 Video Telegram/brauzerda ochiladi."; return; }
+    if(err||!window.YG){ if(ph) ph.textContent=t("🎬 Video Telegram/brauzerda ochiladi."); return; }
     try{
       savedWidgets[i]=new YG.Widget("svw-"+i,{ width: slot.clientWidth||320, components:8,
         events:{ onFetchDone:function(d){ if(ph) ph.style.display=(d&&d.totalResult===0)?'block':'none';
-                   if(d&&d.totalResult===0&&ph) ph.textContent="Bu so'z uchun video topilmadi."; },
-                 onError:function(){ if(ph){ph.style.display='block';ph.textContent="Video yuklashda xatolik.";} } }});
+                   if(d&&d.totalResult===0&&ph) ph.textContent=t("Bu so'z uchun video topilmadi."); },
+                 onError:function(){ if(ph){ph.style.display='block';ph.textContent=t("Video yuklashda xatolik.");} } }});
       savedWidgets[i].fetch(it.word, langInfo(it.lang).yg);
-    }catch(e){ if(ph) ph.textContent="🎬 Video ochiladi."; }
+    }catch(e){ if(ph) ph.textContent=t("🎬 Video ochiladi."); }
   });
 }
 document.getElementById('sInput').addEventListener('keydown',function(e){ if(e.key==='Enter') doSearch(); });
@@ -1061,24 +1117,24 @@ function updateProStatus(){
   try{ if(S.proUntil) dt=new Date(S.proUntil).toLocaleDateString('ru-RU'); }catch(e){}
   el.style.display='block';
   el.innerHTML='<div style="background:linear-gradient(135deg,rgba(246,196,69,.16),rgba(139,91,255,.12));border:1px solid var(--gold);border-radius:14px;padding:12px 14px;margin-bottom:12px;text-align:center">'+
-    '<b style="color:var(--gold);font-size:14px">✅ Pro faol</b>'+
-    (d!=null ? '<div style="font-size:12.5px;color:var(--text);margin-top:3px"><b>'+d+' kun</b> qoldi'+(dt?' · tugash: '+dt:'')+'</div>'
-             : '<div style="font-size:12px;color:var(--muted);margin-top:3px">Muddatsiz</div>')+
+    '<b style="color:var(--gold);font-size:14px">'+t("✅ Pro faol")+'</b>'+
+    (d!=null ? '<div style="font-size:12.5px;color:var(--text);margin-top:3px">'+t('<b>{d} kun</b> qoldi',{d:d})+(dt?' · '+t('tugash:')+' '+dt:'')+'</div>'
+             : '<div style="font-size:12px;color:var(--muted);margin-top:3px">'+t("Muddatsiz")+'</div>')+
     '</div>';
 }
 function applyCode(){
   var c=document.getElementById('proCode').value.trim().toUpperCase();
-  if(!c){ toast("Kodni kiriting"); return; }
-  if(!SERVER){ toast("Kodni faollashtirish uchun ilovani Telegram ichida oching"); return; }
+  if(!c){ toast(t("Kodni kiriting")); return; }
+  if(!SERVER){ toast(t("Kodni faollashtirish uchun ilovani Telegram ichida oching")); return; }
   api('redeem',{code:c}).then(function(res){
     if(res && res.ok){
       S.pro=true; S.proUntil=res.pro_until||null; save();
       var dl=proDaysLeft();
-      toast(dl!=null ? ("🎉 PRO faollashtirildi! "+dl+" kun amal qiladi.") : "🎉 PRO faollashtirildi!");
+      toast(dl!=null ? t("🎉 PRO faollashtirildi! {d} kun amal qiladi.",{d:dl}) : t("🎉 PRO faollashtirildi!"));
       updateProStatus(); renderHome(); renderSearchMeta();
       setTimeout(function(){ go('home'); }, 900);
-    } else toast("Kod noto'g'ri yoki ishlatilgan 😔");
-  }).catch(function(){ toast("Internet xatosi"); });
+    } else toast(t("Kod noto'g'ri yoki ishlatilgan 😔"));
+  }).catch(function(){ toast(t("Internet xatosi")); });
 }
 /* Egasi uchun: yangi bir martalik PRO kod yaratish */
 function genCode(){
@@ -1086,10 +1142,10 @@ function genCode(){
     if(res && res.ok){
       var el=document.getElementById('genOut');
       el.style.display='block';
-      el.innerHTML='Yangi kod: <b style="font-size:16px;letter-spacing:1px">'+res.code+'</b><br><small class="muted">Mijozga yuboring — bir marta ishlaydi.</small>';
+      el.innerHTML=t("Yangi kod:")+' <b style="font-size:16px;letter-spacing:1px">'+res.code+'</b><br><small class="muted">'+t("Mijozga yuboring — bir marta ishlaydi.")+'</small>';
       loadCodes();
-    } else toast("Xatolik");
-  }).catch(function(){ toast("Internet xatosi"); });
+    } else toast(t("Xatolik"));
+  }).catch(function(){ toast(t("Internet xatosi")); });
 }
 /* Egasi: barcha kodlar ro'yxati + status */
 function renderCodes(codes){
@@ -1196,9 +1252,10 @@ function boot(d){
   if(!SERVER){ start(); return; }
   /* Server rejimi: init ALLAQACHON ishga tushgan (parallel) — natijasini kutamiz */
   initPromise.then(function(res){
-    if(res===null){ toast("Server bilan aloqa yo'q — vaqtincha oflayn rejim"); }
+    if(res===null){ toast(t("Server bilan aloqa yo'q — vaqtincha oflayn rejim")); }
     if(res && res.user){
       S.onboarded = !!res.user.onboarded;
+      if(res.user.ui_lang) S.uiLang=res.user.ui_lang;   // interfeys tili (backend qo'shsa — ishlaydi)
       S.level=res.user.level; S.levels=res.user.levels||{}; S.goal=res.user.goal;
       S.interests=res.user.interests||[];
       S.langs=(res.user.langs&&res.user.langs.length)?res.user.langs:(S.langs&&S.langs.length?S.langs:['ru']);
@@ -1222,13 +1279,14 @@ function boot(d){
     }
     start();
   }).catch(function(){
-    toast("Server bilan aloqa yo'q — vaqtincha oflayn rejim");
+    toast(t("Server bilan aloqa yo'q — vaqtincha oflayn rejim"));
     start();
   });
 }
 var _started=false;
 function start(){
   if(_started) return; _started=true;   // ikki marta chaqirilmasin
+  applyI18n();   // statik interfeys matnlarini joriy tilga moslash
   setProLogo();
   var sp=document.getElementById('splash');
   if(sp){ sp.classList.add('hide'); setTimeout(function(){ sp.style.display='none'; }, 300); }
