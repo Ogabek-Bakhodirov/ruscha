@@ -1000,7 +1000,10 @@ function ensureYT(cb){
 window.onYouTubeIframeAPIReady=function(){ ytState="ready"; flushYT(); };
 function flushYT(err){ var q=ytQueue.slice(); ytQueue=[]; q.forEach(function(f){f(err);}); }
 
-var sp={results:[], q:'', idx:0, player:null, timer:null, cues:[], curCue:-1, slow:false};
+/* sp.mount = DOM ID'lar to'plami. Bir vaqtda faqat bitta pleyer faol (search yoki saved). */
+var sp={results:[], q:'', idx:0, player:null, timer:null, cues:[], curCue:-1, slow:false, mount:null};
+function spMountSearch(){ return {key:'search', box:'spBox', yt:'spYT', sub:'spSub', cnt:'spCnt', ad:'spAd', adImg:'spAdImg'}; }
+function spMountSaved(i){ var s='sv'+i; return {key:'saved-'+i, box:s+'Box', yt:s+'YT', sub:s+'Sub', cnt:s+'Cnt', ad:s+'Ad', adImg:s+'AdImg'}; }
 function normTok(w){ return String(w).toLowerCase().replace(/[^a-z0-9']/g,''); }
 /* Cue matnini so'zlarga bo'lib, qidirilgan so'zlarni gold rangda ajratadi. */
 function renderCueText(text, qset){
@@ -1033,38 +1036,38 @@ function dedupByVideo(results){
   });
   return out;
 }
-function openSeylyPlayer(results, q){
+function openSeylyPlayer(results, q, mount){
+  mount = mount || spMountSearch();
+  /* Boshqa joyda pleyer ochiq bo'lsa — avval to'xtatib, DOMdan tozalaymiz. */
+  if(sp.mount && sp.mount.key !== mount.key) hideSeylyPlayer();
+  sp.mount = mount;
   sp.results=dedupByVideo(results); sp.q=q; sp.slow=false;
-  hideYGSearch();
+  if(mount.key==='search') hideYGSearch();
   renderAd();
   ensureYT(function(err){
     if(err || !window.YT || !YT.Player){
-      /* IFrame API yuklanmasa — YouGlish zaxira yo'li */
-      hideSeylyPlayer(); runSearchWidget(q); return;
+      /* IFrame API yuklanmasa — search'da YouGlish zaxira. Saved'da hech nima qilmaymiz. */
+      hideSeylyPlayer(); if(mount.key==='search') runSearchWidget(q); return;
     }
     hideSearchLoading();
-    document.getElementById('spBox').style.display='block';
+    document.getElementById(mount.box).style.display='block';
     spLoad(0);
   });
 }
 function spLoad(i){
-  if(!sp.results.length) return;
+  if(!sp.results.length || !sp.mount) return;
   if(i<0) i=sp.results.length-1;
   if(i>=sp.results.length) i=0;
   sp.idx=i;
   var r=sp.results[i];
   var start=Math.max(0, Math.floor(Number(r.start_time)||0));
 
-  /* Qidirilgan so'zlar to'plami (normallashtirilgan) — cue matnida ajratish uchun */
   sp.qset={};
   String(sp.q||'').split(/\s+/).forEach(function(w){ var n=normTok(w); if(n) sp.qset[n]=1; });
 
-  /* Boshlang'ich matn: qidiruvdan kelgan segment (cue'lar yuklanmaguncha ko'rinadi) */
-  document.getElementById('spSub').innerHTML=renderCueText(r.text||'', sp.qset);
-  document.getElementById('spCnt').textContent=(i+1)+' / '+sp.results.length;
+  document.getElementById(sp.mount.sub).innerHTML=renderCueText(r.text||'', sp.qset);
+  document.getElementById(sp.mount.cnt).textContent=(i+1)+' / '+sp.results.length;
 
-  /* Video davom etgani sari matn yangilansin — bu videoning to'liq cue'larini so'raymiz.
-     Token bilan — foydalanuvchi keyingi videoga o'tsa, eski javob e'tiborsiz qoladi. */
   sp.cues=[]; sp.curCue=-1;
   sp.__ctok = (sp.__ctok||0)+1;
   fetchCuesFor(r.video_id, sp.__ctok);
@@ -1073,7 +1076,7 @@ function spLoad(i){
     sp.player.loadVideoById({videoId:r.video_id, startSeconds:start});
     if(sp.slow){ try{ sp.player.setPlaybackRate(0.5); }catch(e){} }
   } else {
-    sp.player=new YT.Player('spYT', {
+    sp.player=new YT.Player(sp.mount.yt, {
       videoId:r.video_id,
       playerVars:{ start:start, autoplay:1, rel:0, playsinline:1 },
     });
@@ -1085,17 +1088,16 @@ function spLoad(i){
 /* Pleyer vaqti bo'yicha cue matnini yangilash: cue'lar start_time bo'yicha tartiblangan.
    Karaoke (so'z-darajali) animatsiya YO'Q — chalg'ituvchi bo'lgani uchun olib tashlandi. */
 function spTick(){
-  if(!sp.player || !sp.player.getCurrentTime || !sp.cues || !sp.cues.length) return;
+  if(!sp.player || !sp.mount || !sp.player.getCurrentTime || !sp.cues || !sp.cues.length) return;
   var t; try{ t=sp.player.getCurrentTime(); }catch(e){ return; }
   if(typeof t!=='number') return;
-  /* Joriy cue: eng katta cue.start_time <= t. Lineer izlash (100-500 element, tez). */
   var idx=-1;
   for(var i=0;i<sp.cues.length;i++){
     if(Number(sp.cues[i].start_time) <= t) idx=i; else break;
   }
   if(idx>=0 && idx!==sp.curCue){
     sp.curCue=idx;
-    document.getElementById('spSub').innerHTML=renderCueText(sp.cues[idx].text||'', sp.qset||{});
+    document.getElementById(sp.mount.sub).innerHTML=renderCueText(sp.cues[idx].text||'', sp.qset||{});
   }
 }
 function spCtl(act){
@@ -1108,9 +1110,15 @@ function spCtl(act){
   }
 }
 function hideSeylyPlayer(){
-  document.getElementById('spBox').style.display='none';
+  if(sp.mount){
+    var b=document.getElementById(sp.mount.box); if(b) b.style.display='none';
+  }
   if(sp.timer){ clearInterval(sp.timer); sp.timer=null; }
   try{ if(sp.player && sp.player.stopVideo) sp.player.stopVideo(); }catch(e){}
+  /* Yangi mount'ga o'tishda pleyerni butunlay yo'q qilamiz — YT.Player DOM elementini
+     iframe bilan almashtiradi, boshqa element bilan qayta qurish kerak. */
+  try{ if(sp.player && sp.player.destroy) sp.player.destroy(); }catch(e){}
+  sp.player=null; sp.mount=null; sp.cues=[]; sp.curCue=-1;
 }
 function hideYGSearch(){
   document.getElementById('sSlot').style.display='none';
@@ -1126,17 +1134,21 @@ function hideSearchLoading(){
   var e=document.getElementById('sLoad'); if(e) e.style.display='none';
 }
 function renderAd(){
-  var a=document.getElementById('spAd');
+  if(!sp.mount) return;
+  var a=document.getElementById(sp.mount.ad); if(!a) return;
   if(!AD_BANNER || !AD_BANNER.img){ a.style.display='none'; return; }
-  document.getElementById('spAdImg').src=AD_BANNER.img;
+  document.getElementById(sp.mount.adImg).src=AD_BANNER.img;
   if(AD_BANNER.url) a.href=AD_BANNER.url; else a.removeAttribute('href');
   a.style.display='block';
 }
 /* YouGlish (zaxira) ko'rsatgan videoni jimgina o'z bazamizga qo'shamiz:
    backend transcript servisga /ingest yuboradi (dedup u yerda ham bor). */
 var enIngested={};
-function enIngestFromYG(d){
-  if(!SERVER || S.curLang!=='en' || !d) return;
+/* YouGlish ko'rsatgan videoni jimgina bazamizga qo'shamiz.
+   FAQAT ingliz videolar uchun (bazamiz hozircha en). lang default S.curLang. */
+function enIngestFromYG(d, lang){
+  if(!SERVER || !d) return;
+  if((lang||S.curLang) !== 'en') return;
   var vid=d.video || d.videoId || d.id;
   if(!vid || typeof vid!=='string' || !/^[A-Za-z0-9_-]{11}$/.test(vid)) return;
   if(enIngested[vid]) return;   // bir sessiyada bir marta
@@ -1408,6 +1420,18 @@ function renderSaved(){
          '<div class="sv-body">'+defInnerHtml(it.def||{})+
            '<div class="sv-vid">'+(S.pro
              ? '<button class="svid" onclick="savedVideo('+i+')">'+t("▶ Videoni ko'rish")+'</button>'+
+               '<div class="sload" id="svload-'+i+'" style="display:none;margin-top:8px"><span class="spin"></span><span>'+t("Videolar qidirilmoqda…")+'</span></div>'+
+               '<div class="spbox" id="sv'+i+'Box" style="display:none;margin-top:8px">'+
+                 '<div class="spvid"><div id="sv'+i+'YT"></div></div>'+
+                 '<div class="spsub" id="sv'+i+'Sub"></div>'+
+                 '<div class="spcnt" id="sv'+i+'Cnt"></div>'+
+                 '<a class="spad" id="sv'+i+'Ad" style="display:none" target="_blank" rel="noopener"><img id="sv'+i+'AdImg" alt="Reklama"></a>'+
+                 '<div class="ygctrl" style="display:flex;margin-top:2px">'+
+                   '<button class="cbtn" onclick="spCtl(\'prev\')">'+t("⏮ Oldingi")+'</button>'+
+                   '<button class="cbtn" onclick="spCtl(\'slow\')">'+t("🐢 Sekin")+'</button>'+
+                   '<button class="cbtn" onclick="spCtl(\'next\')">'+t("Keyingi ⏭")+'</button>'+
+                 '</div>'+
+               '</div>'+
                '<div class="ygslot" id="svslot-'+i+'" style="display:none;margin-top:8px"></div>'
              : '<button class="btn gold" onclick="go(\'pro\')">'+t("🎬 Pro bilan videosini ko'ring")+'</button>'
            )+'</div>'+
@@ -1426,12 +1450,31 @@ function removeSaved(i){
   if(SERVER) api('unsave_word',{q:it.word, lang:it.lang}).catch(function(){});
   toast(t("O'chirildi"));
 }
-/* Pro: saqlangan so'z videosini shu yerda ochish (o'z tilida) */
+/* Pro: saqlangan so'z videosini shu yerda ochish. Ingliz uchun O'Z PLEYERimiz
+   (bazadan qidirib topsak), aks holda / topilmasa YouGlish zaxira. */
 function savedVideo(i){
   if(!S.pro){ go('pro'); return; }
   var it=_svList[i]; if(!it) return;
   var el=document.getElementById('svi-'+i); if(el) el.classList.add('open');
-  var slot=document.getElementById('svslot-'+i); if(!slot) return;
+
+  /* Ingliz: avval o'z bazadan qidiramiz — topilsa Seyly pleyer shu yerda. */
+  if(it.lang==='en' && SERVER){
+    var load=document.getElementById('svload-'+i); if(load) load.style.display='flex';
+    api('en_search',{q:it.word}).then(function(res){
+      if(load) load.style.display='none';
+      if(res && res.ok && res.results && res.results.length){
+        openSeylyPlayer(res.results, it.word, spMountSaved(i));
+      } else {
+        openSavedYG(i, it);
+      }
+    }).catch(function(){ if(load) load.style.display='none'; openSavedYG(i, it); });
+    return;
+  }
+  openSavedYG(i, it);
+}
+function openSavedYG(i, it){
+  var slot=document.getElementById('svslot-'+i);
+  if(!slot) return;
   slot.style.display='block';
   if(savedWidgets[i]) return;
   slot.innerHTML='<div class="ph" id="svph-'+i+'">'+t("Video yuklanmoqda…")+'</div><div id="svw-'+i+'"></div>';
@@ -1442,6 +1485,7 @@ function savedVideo(i){
       savedWidgets[i]=new YG.Widget("svw-"+i,{ width: slot.clientWidth||320, components:8,
         events:{ onFetchDone:function(d){ if(ph) ph.style.display=(d&&d.totalResult===0)?'block':'none';
                    if(d&&d.totalResult===0&&ph) ph.textContent=t("Bu so'z uchun video topilmadi."); },
+                 onVideoChange:function(d){ enIngestFromYG(d, it.lang); },  /* jimgina bazamizga qo'shamiz (faqat en) */
                  onError:function(){ if(ph){ph.style.display='block';ph.textContent=t("Video yuklashda xatolik.");} } }});
       savedWidgets[i].fetch(it.word, langInfo(it.lang).yg);
     }catch(e){ if(ph) ph.textContent=t("🎬 Video ochiladi."); }
