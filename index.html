@@ -442,7 +442,7 @@ function api(action, extra){
 
 /* ================== HOLAT (localStorage) ================== */
 var DEF = { onboarded:false, uiLang:'uz', level:null, levels:{}, goal:null, interests:[], daily:10, pro:false, proUntil:null,
-            langs:['ru'], curLang:'ru', saved:{},
+            langs:['ru'], curLang:'ru', accent:null, saved:{},
             learned:{}, day:"", todayNew:0, sDay:"", sCount:0, streak:0, lastDay:"" };
 var S;
 try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem('ru_state')||'{}')); }
@@ -509,7 +509,15 @@ function toast(msg){
 }
 
 /* ================== ONBOARDING ================== */
-var ob = { step:0, uiLang:'uz', langs:['ru'], levels:{}, goal:null, interests:[], daily:10 };
+var ob = { step:0, uiLang:'uz', langs:['ru'], accent:null, levels:{}, goal:null, interests:[], daily:10 };
+/* O'rganish tillari — ingliz talaffuz (accent) bo'yicha US/UK alohida.
+   Har variant: lang kodi (ru/en/de) + ixtiyoriy accent (us/uk). */
+var OB_LEARN_LANGS = [
+  {v:'ru',    lang:'ru', accent:null, em:'🇷🇺', t:'Rus tili',         s:'400 ta ibora tayyor'},
+  {v:'en-us', lang:'en', accent:'us', em:'🇺🇸', t:'Ingliz tili — US', s:'Amerikacha talaffuz'},
+  {v:'en-uk', lang:'en', accent:'uk', em:'🇬🇧', t:'Ingliz tili — UK', s:'Britaniyacha talaffuz'},
+  {v:'de',    lang:'de', accent:null, em:'🇩🇪', t:'Nemis tili',       s:'400 ta ibora tayyor'}
+];
 /* CEFR darajalari (A1–C2). Qiymatlar: a1..c2. Backend hozircha eski qiymatlarni
    kutadi — bazani keyin moslaymiz (sanitizeLevels). Hozir faqat UI. */
 var LEVEL_OPTS = [
@@ -524,8 +532,7 @@ var OB_STEPS = [
   { title:"Ilova tilini tanlang", sub:"Interfeys shu tilda bo'ladi. Hozircha o'zbekcha tayyor, qolganlari tez orada.",
     langPick:true, key:"uiLang" },
   { title:"Qaysi tillarni o'rganmoqchisiz?", sub:"Bir nechtasini tanlashingiz mumkin — keyin xohlagan payt almashtirasiz.",
-    opts: LANGS.map(function(L){ return {v:L.code, em:L.flag, t:L.name, s:L.hint}; }),
-    key:"langs", multi:true },
+    langLearnPick:true, key:"langs" },
   { title:"Har bir til uchun darajangiz?", sub:"Tanlagan tillaringiz bo'yicha alohida belgilang.",
     perLang:true, key:"levels" },
   { title:"Nima uchun o'rganyapsiz?", sub:"Sizga kerakli iboralarni birinchi beramiz.",
@@ -576,6 +583,21 @@ function renderOb(){
     return;
   }
 
+  /* O'rganish tillari (ingliz accent US/UK alohida) */
+  if(st.langLearnPick){
+    OB_LEARN_LANGS.forEach(function(o){
+      var sel = o.lang==='en'
+        ? (ob.langs.indexOf('en')>=0 && ob.accent===o.accent)
+        : (ob.langs.indexOf(o.lang)>=0);
+      h+='<div class="opt'+(sel?' sel':'')+'" onclick="obPickLearn(\''+o.v+'\')">'+
+         '<span class="em">'+o.em+'</span><div>'+t(o.t)+
+         (o.s?'<small>'+t(o.s)+'</small>':'')+'</div></div>';
+    });
+    h+='<div style="height:8px"></div><button class="btn primary" onclick="obNext()">'+t('Davom etish →')+'</button>';
+    document.getElementById('obStep').innerHTML=h;
+    return;
+  }
+
   var opts = st.key==='interests'
     ? CAT_META.map(function(m){
         var rc=LDATA.ru.categories.find(function(c){return c.key===m.key;});
@@ -591,6 +613,23 @@ function renderOb(){
      (ob.step===OB_STEPS.length-1?t("🚀 Boshlash"):t("Davom etish →"))+'</button>';
   document.getElementById('obStep').innerHTML=h;
   window._obOpts=opts;
+}
+function obPickLearn(v){
+  var o=null; for(var i=0;i<OB_LEARN_LANGS.length;i++) if(OB_LEARN_LANGS[i].v===v){ o=OB_LEARN_LANGS[i]; break; }
+  if(!o) return;
+  if(o.lang==='en'){
+    var hasEn = ob.langs.indexOf('en')>=0;
+    if(hasEn && ob.accent===o.accent){
+      ob.langs.splice(ob.langs.indexOf('en'),1); ob.accent=null;   // shu variant tanlangandi — bekor
+    } else {
+      if(!hasEn) ob.langs.push('en');
+      ob.accent=o.accent;   // ikkinchi ingliz variantidan avtomatik almashadi
+    }
+  } else {
+    var ix=ob.langs.indexOf(o.lang);
+    if(ix>=0) ob.langs.splice(ix,1); else ob.langs.push(o.lang);
+  }
+  renderOb();
 }
 function obPickLevel(code, val){ ob.levels[code]=val; renderOb(); }
 function obPickLang(code, ready){
@@ -610,6 +649,8 @@ function obNext(){
   if(st.perLang){
     var allSet = ob.langs.every(function(c){ return !!ob.levels[c]; });
     if(!allSet){ toast(t("Har bir til uchun darajani tanlang 🙂")); return; }
+  } else if(st.langLearnPick){
+    if(ob.langs.length===0){ toast(t("Kamida bitta til tanlang 🙂")); return; }
   } else if(!st.langPick && (st.multi ? ob[st.key].length===0 : (ob[st.key]===null||ob[st.key]===undefined))){
     toast(t("Iltimos, tanlang 🙂")); return;
   }
@@ -621,13 +662,13 @@ function obNext(){
   S.level = S.levels[primary] || null;   // eski maydonlar bilan moslik
   S.goal=ob.goal; S.interests=ob.interests.slice();
   S.langs=ob.langs.slice();
+  S.accent = (S.langs.indexOf('en')>=0) ? (ob.accent||null) : null;   // accent faqat ingliz tanlansa
   S.curLang = primary;
   S.daily=ob.daily;   // maqsad (cheklov emas). Bepul cheklov = FREE_DAILY, alohida.
   save();
   applyI18n();   // statik matnlarni tanlangan interfeys tiliga moslash
   if(SERVER){
-    // ui_lang'ni ham yuboramiz (backend hozircha e'tiborsiz qoldiradi — kelajak uchun)
-    api('onboard',{levels:S.levels, level:S.level, goal:ob.goal, interests:ob.interests, daily:ob.daily, langs:ob.langs, ui_lang:S.uiLang})
+    api('onboard',{levels:S.levels, level:S.level, goal:ob.goal, interests:ob.interests, daily:ob.daily, langs:ob.langs, ui_lang:S.uiLang, accent:S.accent})
       .catch(function(){ /* keyingi safar qayta uriniladi */ });
   }
   go('home');
@@ -1262,6 +1303,7 @@ function boot(d){
       S.level=res.user.level; S.levels=res.user.levels||{}; S.goal=res.user.goal;
       S.interests=res.user.interests||[];
       S.langs=(res.user.langs&&res.user.langs.length)?res.user.langs:(S.langs&&S.langs.length?S.langs:['ru']);
+      S.accent=res.user.accent||null;   // ingliz accent (us/uk)
       if(S.langs.indexOf(S.curLang)<0) S.curLang=S.langs[0];
       S.daily=res.user.daily||10;
       S.pro=!!res.user.pro; S.proUntil=res.user.pro_until||null;
