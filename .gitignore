@@ -1,0 +1,4 @@
+# Test/dev artefaktlari — repo faqat frontend (index.html, phrases.json, rasmlar)
+node_modules/
+package.json
+package-lock.json
