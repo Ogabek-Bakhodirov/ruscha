@@ -1009,7 +1009,10 @@ function flushYT(err){ var q=ytQueue.slice(); ytQueue=[]; q.forEach(function(f){
 var sp={results:[], q:'', idx:0, player:null, timer:null, cues:[], curCue:-1, slow:false, mount:null, lang:'en'};
 function spMountSearch(){ return {key:'search', box:'spBox', yt:'spYT', sub:'spSub', cnt:'spCnt', ad:'spAd', adImg:'spAdImg'}; }
 function spMountSaved(i){ var s='sv'+i; return {key:'saved-'+i, box:s+'Box', yt:s+'YT', sub:s+'Sub', cnt:s+'Cnt', ad:s+'Ad', adImg:s+'AdImg'}; }
-function normTok(w){ return String(w).toLowerCase().replace(/[^a-z0-9']/g,''); }
+/* Barcha tillar uchun: harf/raqam va apostrofdan boshqasini olib tashlaydi
+   (\p{L}=istalgan harf — kirill/lotin/umlaut, \p{N}=raqam). Kirill so'z endi
+   bo'sh qatorga aylanmaydi, shuning uchun qidirilgan rus so'zi ham gold belgilanadi. */
+function normTok(w){ return String(w).toLowerCase().replace(/[^\p{L}\p{N}']/gu,''); }
 /* Cue matnini so'zlarga bo'lib, qidirilgan so'zlarni gold rangda ajratadi. */
 function renderCueText(text, qset){
   var words=String(text||'').split(/\s+/).filter(Boolean);
