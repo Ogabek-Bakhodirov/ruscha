@@ -110,7 +110,13 @@
       <b style="font-size:14px">📥 YouTube video yuklash</b>
       <p class="muted" style="font-size:12.5px;margin:6px 0 10px">Har qatorga bitta ID yoki havola (yoki vergul bilan). Bir martada 100 tagacha.</p>
       <textarea id="upText" rows="6" placeholder="dQw4w9WgXcQ&#10;https://youtu.be/abc123defGH&#10;https://www.youtube.com/watch?v=..."></textarea>
-      <div class="acc">
+      <div class="acc" style="margin-bottom:8px">
+        <span style="font-size:13px;color:var(--muted)">Til:</span>
+        <button class="rbtn" data-l="ru" onclick="upLang('ru')">🇷🇺 Rus</button>
+        <button class="rbtn on" data-l="en" onclick="upLang('en')">🇬🇧 Ingliz</button>
+        <button class="rbtn" data-l="de" onclick="upLang('de')">🇩🇪 Nemis</button>
+      </div>
+      <div class="acc" id="accRow">
         <span style="font-size:13px;color:var(--muted)">Talaffuz:</span>
         <button class="rbtn on" data-a="" onclick="upAccent('')">Belgilanmagan</button>
         <button class="rbtn" data-a="us" onclick="upAccent('us')">🇺🇸 US</button>
@@ -137,7 +143,7 @@
 <script>
 var API_URL = "https://ubctutftqgbgcevfziil.supabase.co/functions/v1/api";
 var TKEY = "seyly_admin_token";
-var st = { range:7, tab:'stats', upAccent:'', data:null };
+var st = { range:7, tab:'stats', upAccent:'', upLang:'en', data:null };
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function token(){ try{ return sessionStorage.getItem(TKEY)||''; }catch(e){ return ''; } }
@@ -257,15 +263,22 @@ function closeSheet(e,f){ if(f||e.target===document.getElementById('sheet')) doc
 
 /* ---- Upload ---- */
 function upAccent(a){ st.upAccent=a;
-  document.querySelectorAll('#tab-up .rbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.a===a); });
+  document.querySelectorAll('#tab-up .rbtn[data-a]').forEach(function(b){ b.classList.toggle('on', b.dataset.a===a); });
+}
+/* Til tanlash: accent (Talaffuz) faqat ingliz uchun ko'rinadi (rus/nemisda accent yo'q). */
+function upLang(l){ st.upLang=l;
+  document.querySelectorAll('#tab-up .rbtn[data-l]').forEach(function(b){ b.classList.toggle('on', b.dataset.l===l); });
+  var acc=document.getElementById('accRow'); if(acc) acc.style.display = (l==='en') ? 'flex' : 'none';
+  if(l!=='en'){ st.upAccent=''; document.querySelectorAll('#tab-up .rbtn[data-a]').forEach(function(b){ b.classList.toggle('on', b.dataset.a===''); }); }
 }
 function doUpload(){
   var raw=document.getElementById('upText').value||'';
   var vids=raw.split(/[\s,]+/).map(function(x){return x.trim();}).filter(Boolean).slice(0,100);
   if(!vids.length){ alert('Video ID yoki havola kiriting'); return; }
+  var lang=st.upLang||'en';
   var btn=document.getElementById('upBtn'); btn.disabled=true; btn.textContent='Yuborilmoqda…';
   var out=document.getElementById('upOut'); out.style.display='none';
-  apiAdmin('admin_ingest',{videos:vids, accent:st.upAccent||undefined}).then(function(res){
+  apiAdmin('admin_ingest',{videos:vids, lang:lang, accent:(lang==='en'?(st.upAccent||undefined):undefined)}).then(function(res){
     btn.disabled=false; btn.textContent='Yuborish';
     if(res.status===401){ logout(); return; }
     var j=res.j||{};
