@@ -610,7 +610,7 @@ var OB_STEPS = [
            {v:"daily",em:"🗣️", t:"Kundalik muloqot", s:"Bozor, transport, do'kon"},
            {v:"study",em:"🎓", t:"O'qish / ta'lim", s:"Universitet, imtihonlar"},
            {v:"self", em:"✨", t:"O'zim uchun", s:"Qiziqish, rivojlanish, filmlar"} ], key:"goal", multi:false },
-  { title:"Qiziqishlaringizni tanlang", sub:"Sizga eng mos videolarni birinchi ko'rsatamiz. Bir nechtasini tanlang.",
+  { title:"Qiziqishlaringizni tanlang", sub:"Sizga eng mos videolarni birinchi ko'rsatamiz. 1 dan 5 tagacha tanlang.",
     interestPick:true, key:"interests" },
   { title:"Kuniga nechta ibora?", sub:"Oz-ozdan, lekin har kuni — eng samarali yo'l.",
     opts:[ {v:5,  em:"🙂", t:"5 ta — yengil", s:"Bepul rejaga to'liq mos"},
@@ -698,9 +698,14 @@ function renderOb(){
   document.getElementById('obStep').innerHTML=h;
   window._obOpts=opts;
 }
+var MAX_INTERESTS = 5;
 function obPickInterest(key){
   var ix=ob.interests.indexOf(key);
-  if(ix>=0) ob.interests.splice(ix,1); else ob.interests.push(key);
+  if(ix>=0){ ob.interests.splice(ix,1); }
+  else {
+    if(ob.interests.length>=MAX_INTERESTS){ toast(t("Ko'pi bilan {n} ta tanlang 🙂",{n:MAX_INTERESTS})); return; }
+    ob.interests.push(key);
+  }
   renderOb();
 }
 function obPickLearn(v){
