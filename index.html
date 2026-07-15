@@ -497,15 +497,17 @@ function resetDaily(){
 resetDaily();
 
 /* ================== MA'LUMOT (ko'p tilli) ================== */
+/* Til konfiguratsiyasi — har til haqidagi HAMMA ma'lumot bitta joyda.
+   corpus:true = o'z transkript-bazamiz bor (Seyly pleyer); aks holda YouGlish.
+   Yangi til qo'shish: shu ro'yxatga yozuv + backend kontent. Boshqa kod o'zgarmaydi. */
 var LANGS=[
-  {code:'ru', flag:'🇷🇺', name:'Rus tili',    yg:'russian', tts:'ru-RU', hint:'400 ta ibora tayyor'},
-  {code:'en', flag:'🇬🇧', name:'Ingliz tili', yg:'english', tts:'en-US', hint:'400 ta ibora tayyor'},
-  {code:'de', flag:'🇩🇪', name:'Nemis tili',  yg:'german',  tts:'de-DE', hint:'400 ta ibora tayyor'}
+  {code:'ru', flag:'🇷🇺', name:'Rus tili',    yg:'russian', tts:'ru-RU', corpus:true, hint:'400 ta ibora tayyor'},
+  {code:'en', flag:'🇬🇧', name:'Ingliz tili', yg:'english', tts:'en-US', corpus:true, hint:'400 ta ibora tayyor'},
+  {code:'de', flag:'🇩🇪', name:'Nemis tili',  yg:'german',  tts:'de-DE', corpus:true, hint:'400 ta ibora tayyor'}
 ];
 function langInfo(c){ for(var i=0;i<LANGS.length;i++) if(LANGS[i].code===c) return LANGS[i]; return LANGS[0]; }
-/* O'z transkript-korpusimiz (Seyly pleyer) bor tillar: ingliz + rus.
-   Boshqalar (nemis) YouGlish'da ochiladi. */
-function hasCorpus(c){ return c==='en' || c==='ru' || c==='de'; }
+/* Korpus bayrog'i konfigdan (noma'lum kod = false; langInfo'ning ru-fallback'iga tayanmaymiz) */
+function hasCorpus(c){ for(var i=0;i<LANGS.length;i++) if(LANGS[i].code===c) return !!LANGS[i].corpus; return false; }
 /* Oxirgi qidiruv natijasi qaysi tilda topilgani (fallback bo'lishi mumkin):
    define va saqlash shu tilga moslanadi. null = joriy til (S.curLang). */
 var searchLang=null;
@@ -821,14 +823,22 @@ function renderHome(){
 
 /* ---- Til almashtirgich ---- */
 var langPanelOpen=false;
+/* Til "pill" tugmasi — home va qidiruv tanlagichlari BIR XIL ko'rinishda (bitta manba) */
+function langBtnHtml(code, active, clickJs){
+  return '<button class="lbtn'+(active?' on':'')+'" onclick="'+clickJs+'">'+
+         '<span class="fl">'+langInfo(code).flag+'</span>'+code.toUpperCase()+'</button>';
+}
+/* Talaffuz (accent) chiplari — faqat ingliz uchun, ikkala tanlagichda ham shu */
+function accentBtnsHtml(){
+  return '<button class="lbtn'+(S.accent==='us'?' on':'')+'" onclick="setAccent(\'us\')"><span class="fl">🇺🇸</span>US</button>'+
+         '<button class="lbtn'+(S.accent==='uk'?' on':'')+'" onclick="setAccent(\'uk\')"><span class="fl">🇬🇧</span>UK</button>';
+}
 function renderLangSwitch(){
   var sw=document.getElementById('langSwitch'); if(!sw) return;
   if(!S.langs || !S.langs.length) S.langs=['ru'];
   var h='';
   S.langs.forEach(function(c){
-    var L=langInfo(c);
-    h+='<button class="lbtn'+(c===S.curLang?' on':'')+'" onclick="switchLang(\''+c+'\')">'+
-       '<span class="fl">'+L.flag+'</span>'+c.toUpperCase()+'</button>';
+    h+=langBtnHtml(c, c===S.curLang, "switchLang('"+c+"')");
   });
   h+='<button class="lbtn add" onclick="toggleLangPanel()" title="Til qo\'shish">'+(langPanelOpen?'✕':'＋')+'</button>';
   if(langPanelOpen){
@@ -843,8 +853,7 @@ function renderLangSwitch(){
   if(S.curLang==='en'){
     h+='<div style="flex-basis:100%;height:0"></div>';
     h+='<span style="align-self:center;opacity:.6;font-size:13px;margin-right:2px">'+t('Talaffuz')+':</span>';
-    h+='<button class="lbtn'+(S.accent==='us'?' on':'')+'" onclick="setAccent(\'us\')"><span class="fl">🇺🇸</span>US</button>';
-    h+='<button class="lbtn'+(S.accent==='uk'?' on':'')+'" onclick="setAccent(\'uk\')"><span class="fl">🇬🇧</span>UK</button>';
+    h+=accentBtnsHtml();
   }
   sw.innerHTML=h;
 }
@@ -934,21 +943,9 @@ function openBody(id){
         '<button class="sbtn v" onclick="phVideo('+id+')">'+t("▶ Videoni ko'rish")+'</button>'+
         '<button class="sbtn t" onclick="speak(\''+encodeURIComponent(p.ru)+'\',\''+langInfo(p._lang||'ru').tts+'\')">'+t("🔊 Talaffuz")+'</button>'+
       '</div>'+
-      /* Seyly pleyer (o'z korpusimiz) — search page bilan bir xil komponent.
-         Korpusda topilmasa / korpussiz til (de) → YouGlish zaxira (catslot). */
-      '<div class="sload" id="catload-'+id+'" style="display:none;margin-top:8px"><span class="spin"></span><span>'+t("Videolar qidirilmoqda…")+'</span></div>'+
-      '<div class="spbox" id="cat'+id+'Box" style="display:none;margin-top:8px">'+
-        '<div class="spvid"><div id="cat'+id+'YT"></div></div>'+
-        '<div class="spsub" id="cat'+id+'Sub"></div>'+
-        '<div class="spcnt" id="cat'+id+'Cnt"></div>'+
-        '<a class="spad" id="cat'+id+'Ad" style="display:none" target="_blank" rel="noopener"><img id="cat'+id+'AdImg" alt="Reklama"></a>'+
-        '<div class="ygctrl" style="display:flex;margin-top:2px">'+
-          '<button class="cbtn" onclick="spCtl(\'prev\')">'+t("⏮ Oldingi")+'</button>'+
-          '<button class="cbtn" onclick="spCtl(\'slow\')">'+t("🐢 Sekin")+'</button>'+
-          '<button class="cbtn" onclick="spCtl(\'next\')">'+t("Keyingi ⏭")+'</button>'+
-        '</div>'+
-      '</div>'+
-      '<div class="ygslot" id="catslot-'+id+'" style="display:none;margin-top:8px"></div>';
+      /* Seyly pleyer (o'z korpusimiz) — search/saved bilan bir xil blok (spVideoBlockHtml).
+         Korpusda topilmasa / korpussiz til → YouGlish zaxira (catslot). */
+      spVideoBlockHtml('cat'+id, 'catload-'+id, 'catslot-'+id);
   }
   document.getElementById('phi-'+id).classList.add('open');
   if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
@@ -1029,6 +1026,42 @@ var sp={results:[], q:'', idx:0, player:null, timer:null, cues:[], curCue:-1, sl
 function spMountSearch(){ return {key:'search', box:'spBox', yt:'spYT', sub:'spSub', cnt:'spCnt', ad:'spAd', adImg:'spAdImg'}; }
 function spMountSaved(i){ var s='sv'+i; return {key:'saved-'+i, box:s+'Box', yt:s+'YT', sub:s+'Sub', cnt:s+'Cnt', ad:s+'Ad', adImg:s+'AdImg'}; }
 function spMountCat(id){ var s='cat'+id; return {key:'cat-'+id, box:s+'Box', yt:s+'YT', sub:s+'Sub', cnt:s+'Cnt', ad:s+'Ad', adImg:s+'AdImg'}; }
+
+/* ===== Umumiy video-blok HTML (saqlangan + kategoriya bir xil tuzilma) =====
+   base — spMount* bilan mos id'lar: {base}Box/{base}YT/{base}Sub/{base}Cnt/{base}Ad(+Img) */
+function spVideoBlockHtml(base, loadId, slotId){
+  return '<div class="sload" id="'+loadId+'" style="display:none;margin-top:8px"><span class="spin"></span><span>'+t("Videolar qidirilmoqda…")+'</span></div>'+
+    '<div class="spbox" id="'+base+'Box" style="display:none;margin-top:8px">'+
+      '<div class="spvid"><div id="'+base+'YT"></div></div>'+
+      '<div class="spsub" id="'+base+'Sub"></div>'+
+      '<div class="spcnt" id="'+base+'Cnt"></div>'+
+      '<a class="spad" id="'+base+'Ad" style="display:none" target="_blank" rel="noopener"><img id="'+base+'AdImg" alt="Reklama"></a>'+
+      '<div class="ygctrl" style="display:flex;margin-top:2px">'+
+        '<button class="cbtn" onclick="spCtl(\'prev\')">'+t("⏮ Oldingi")+'</button>'+
+        '<button class="cbtn" onclick="spCtl(\'slow\')">'+t("🐢 Sekin")+'</button>'+
+        '<button class="cbtn" onclick="spCtl(\'next\')">'+t("Keyingi ⏭")+'</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="ygslot" id="'+slotId+'" style="display:none;margin-top:8px"></div>';
+}
+
+/* Natija qaysi tildan topildi (server en<->ru fallback bergan bo'lishi mumkin) */
+function corpusHitLang(res, def){ return (res && res.lang && hasCorpus(res.lang)) ? res.lang : def; }
+
+/* ===== Korpus-avval oqim — BITTA yadro (sirtlar: saqlangan, kategoriya) =====
+   O'z bazadan qidiradi; topilsa Seyly pleyer (mount), topilmasa/korpussiz til/xato -> fallback (YouGlish).
+   Qidiruv sahifasi (doSearch) atayin alohida: limit hisobi, lug'at (define) va
+   til-almashish toast mas'uliyatlari bor — ularni bu yadroga aralashtirmaymiz (SRP). */
+function corpusFirstVideo(q, lang, mount, loadId, fallback){
+  if(!(hasCorpus(lang) && SERVER)){ fallback(); return; }
+  var load=document.getElementById(loadId); if(load) load.style.display='flex';
+  api(lang+'_search',{q:q}).then(function(res){
+    if(load) load.style.display='none';
+    if(res && res.ok && res.results && res.results.length){
+      openSeylyPlayer(res.results, q, mount, corpusHitLang(res, lang));
+    } else fallback();
+  }).catch(function(){ if(load) load.style.display='none'; fallback(); });
+}
 /* Barcha tillar uchun: harf/raqamdan boshqa hammasini (apostrof ham) olib tashlaydi
    (\p{L}=istalgan harf — kirill/lotin/umlaut, \p{N}=raqam). Kirill so'z ham,
    "Nancy's" kabi egalik shakli ham to'g'ri normallashadi. */
@@ -1219,47 +1252,51 @@ function ensureYG(cb){
 window.onYouglishAPIReady=function(){ ygState="ready"; flushYG(); };
 function flushYG(err){ var q=ygQueue.slice(); ygQueue=[]; q.forEach(function(f){f(err);}); }
 
-/* Kategoriya iborasi videosi — search/saved bilan BIR XIL oqim:
-   en/rus → o'z korpusdan qidirib Seyly pleyer (spMountCat), topilmasa/de → YouGlish. */
-function phVideo(id){
-  var p=byId[id]; if(!p) return;
-  var lang=p._lang||'ru';
-  if(hasCorpus(lang) && SERVER){
-    var load=document.getElementById('catload-'+id); if(load) load.style.display='flex';
-    api(lang+'_search',{q:p.ru}).then(function(res){
-      if(load) load.style.display='none';
-      if(res && res.ok && res.results && res.results.length){
-        var eff=(res.lang && hasCorpus(res.lang)) ? res.lang : lang;   // pleyer cue'lari shu til bo'yicha
-        openSeylyPlayer(res.results, p.ru, spMountCat(id), eff);
-      } else {
-        openCatYG(id, p);
-      }
-    }).catch(function(){ if(load) load.style.display='none'; openCatYG(id, p); });
+/* ===== YouGlish vidjet fabrikasi — BITTA yaratish nuqtasi (qidiruv/saqlangan/kategoriya) =====
+   opts: { slotId  - vidjet joylashadigan .ygslot id'si
+           tag     - ichki div id'lari uchun unikal belgi (ygph-/ygw- prefiks bilan)
+           key     - kesh kaliti (ygWidgets)
+           q, lang - so'rov va til (langInfo(lang).yg)
+           noneMsg - "topilmadi" matni (ixtiyoriy)
+           onVideo - video almashganda chaqiriladi (ixtiyoriy)
+           refetch - kesh bo'lsa ham yangi so'rov bilan qayta qidirish (qidiruv sahifasi) }
+   Kesh DOM bilan solishtiriladi: ro'yxat qayta chizilgan bo'lsa (eski vidjet DOMda yo'q)
+   vidjet qaytadan quriladi — "bosdim, hech narsa chiqmadi" bug'i oldini oladi. */
+var ygWidgets={};
+function openYG(opts){
+  var slot=document.getElementById(opts.slotId); if(!slot) return;
+  slot.style.display='block';
+  var w=ygWidgets[opts.key];
+  if(w && document.getElementById('ygw-'+opts.tag)){
+    if(opts.refetch){ try{ w.fetch(opts.q, langInfo(opts.lang).yg); }catch(e){} }
     return;
   }
-  openCatYG(id, p);
-}
-/* YouGlish zaxira (korpussiz til yoki korpusda topilmagan ibora).
-   Ko'rsatilgan videoni jimgina bazamizga qo'shamiz — korpus vaqt o'tib boyiydi. */
-var catWidgets={};
-function openCatYG(id, p){
-  var slot=document.getElementById('catslot-'+id);
-  if(!slot) return;
-  slot.style.display='block';
-  if(catWidgets[id]) return;
-  slot.innerHTML='<div class="ph" id="catph-'+id+'">'+t("Video yuklanmoqda…")+'</div><div id="catw-'+id+'"></div>';
+  slot.innerHTML='<div class="ph" id="ygph-'+opts.tag+'">'+t("Video yuklanmoqda…")+'</div><div id="ygw-'+opts.tag+'"></div>';
   ensureYG(function(err){
-    var ph=document.getElementById('catph-'+id);
+    var ph=document.getElementById('ygph-'+opts.tag);
     if(err||!window.YG){ if(ph) ph.textContent=t("🎬 Video Telegram/brauzerda ochiladi."); return; }
     try{
-      catWidgets[id]=new YG.Widget("catw-"+id,{ width: slot.clientWidth||320, components:8,
-        events:{ onFetchDone:function(d){ if(ph) ph.style.display=(d&&d.totalResult===0)?'block':'none';
-                   if(d&&d.totalResult===0&&ph) ph.textContent=t("Bu ibora uchun video topilmadi."); },
-                 onVideoChange:function(d){ logVideo(id, d); enIngestFromYG(d, p._lang||'ru'); },
+      ygWidgets[opts.key]=new YG.Widget('ygw-'+opts.tag,{ width: slot.clientWidth||320, components:8,
+        events:{ onFetchDone:function(d){ if(ph){ ph.style.display=(d&&d.totalResult===0)?'block':'none';
+                   if(d&&d.totalResult===0) ph.textContent=opts.noneMsg||t("Bu so'z uchun video topilmadi."); } },
+                 onVideoChange:function(d){ if(opts.onVideo) opts.onVideo(d); },
                  onError:function(){ if(ph){ph.style.display='block';ph.textContent=t("Video yuklashda xatolik.");} } }});
-      catWidgets[id].fetch(p.ru, langInfo(p._lang||'ru').yg);
+      ygWidgets[opts.key].fetch(opts.q, langInfo(opts.lang).yg);
     }catch(e){ if(ph) ph.textContent=t("🎬 Video Telegram/brauzerda ochiladi."); }
   });
+}
+
+/* Kategoriya iborasi videosi — umumiy corpusFirstVideo yadrosi orqali (search/saved bilan bir xil) */
+function phVideo(id){
+  var p=byId[id]; if(!p) return;
+  corpusFirstVideo(p.ru, p._lang||'ru', spMountCat(id), 'catload-'+id, function(){ openCatYG(id, p); });
+}
+/* YouGlish zaxira — umumiy fabrika orqali. logVideo: ibora-video keshi boyiydi. */
+function openCatYG(id, p){
+  var lang=p._lang||'ru';
+  openYG({ slotId:'catslot-'+id, tag:'cat'+id, key:'cat'+id, q:p.ru, lang:lang,
+           noneMsg:t("Bu ibora uchun video topilmadi."),
+           onVideo:function(d){ logVideo(id, d); enIngestFromYG(d, lang); } });
 }
 /* YouGlish ochgan videoni jimgina bazaga yozamiz (o'z video-keshimiz boyiydi) */
 var loggedVids={};
@@ -1274,7 +1311,6 @@ function logVideo(phraseId, d){
 }
 
 /* ================== QIDIRUV ================== */
-var sWidget=null;
 function renderSearchMeta(){
   document.getElementById('sCount').textContent = S.pro ? (S.sCount+"/∞") : (S.sCount+"/"+FREE_SEARCH);
   document.getElementById('sLock').style.display = (!S.pro && S.sCount>=FREE_SEARCH) ? 'block':'none';
@@ -1285,23 +1321,21 @@ function renderSearchMeta(){
     inp.placeholder=(ex[sl]||ex.ru)+' '+langInfo(sl).flag;
   }
 }
-/* Qidiruv sahifasi til tanlagichi — home tilidan mustaqil, doim ko'rinib turadi. */
+/* Qidiruv sahifasi til tanlagichi — home tilidan mustaqil, doim ko'rinib turadi.
+   Tugmalar langBtnHtml/accentBtnsHtml'dan — home tanlagichi bilan bitta manba. */
 function renderSearchLangs(){
   var el=document.getElementById('searchLangBar'); if(!el) return;
   if(!S.langs || !S.langs.length) S.langs=['ru'];
   var cur=curSearchLang();
   var h='<span class="slang-lbl">'+t('Qidiruv tili')+':</span>';
   S.langs.forEach(function(c){
-    var L=langInfo(c);
-    h+='<button class="lbtn'+(c===cur?' on':'')+'" onclick="setSearchLang(\''+c+'\')">'+
-       '<span class="fl">'+L.flag+'</span>'+c.toUpperCase()+'</button>';
+    h+=langBtnHtml(c, c===cur, "setSearchLang('"+c+"')");
   });
   /* Ingliz qidiruv tili tanlansa — talaffuz (accent) qidiruvga ta'sir qiladi */
   if(cur==='en'){
     h+='<span style="flex-basis:100%;height:0"></span>';
     h+='<span class="slang-lbl">'+t('Talaffuz')+':</span>';
-    h+='<button class="lbtn'+(S.accent==='us'?' on':'')+'" onclick="setAccent(\'us\')"><span class="fl">🇺🇸</span>US</button>';
-    h+='<button class="lbtn'+(S.accent==='uk'?' on':'')+'" onclick="setAccent(\'uk\')"><span class="fl">🇬🇧</span>UK</button>';
+    h+=accentBtnsHtml();
   }
   el.innerHTML=h;
 }
@@ -1317,19 +1351,9 @@ function setSearchLang(c){
 }
 function runSearchWidget(q){
   hideSearchLoading();
-  var slot=document.getElementById('sSlot'); slot.style.display='block';
   document.getElementById('sCtrl').style.display='flex';
-  ensureYG(function(err){
-    if(err||!window.YG){ slot.innerHTML='<div class="ph">'+t("🎬 Video Telegram/brauzerda ochiladi.")+'</div>'; return; }
-    try{
-      if(!sWidget){
-        slot.innerHTML='<div id="sW"></div>';
-        sWidget=new YG.Widget("sW",{ width: slot.clientWidth||320, components:8,
-          events:{ onVideoChange:function(d){ enIngestFromYG(d, curSearchLang()); } }});   // ko'rsatilgan video jimgina bazamizga qo'shiladi
-      }
-      sWidget.fetch(q, langInfo(curSearchLang()).yg);
-    }catch(e){ slot.innerHTML='<div class="ph">'+t("Video yuklashda xatolik.")+'</div>'; }
-  });
+  openYG({ slotId:'sSlot', tag:'s', key:'search', q:q, lang:curSearchLang(), refetch:true,
+           onVideo:function(d){ enIngestFromYG(d, curSearchLang()); } });   // ko'rsatilgan video jimgina bazamizga qo'shiladi
 }
 var searchBusy=false;
 function doSearch(){
@@ -1356,7 +1380,7 @@ function doSearch(){
           if(!S.pro) S.sCount++;   // server 1 taga oshirdi (*_search ichida, fallback qayta hisoblamaydi)
           /* Natija qaysi tilda topildi — fallback bo'lsa boshqa til. Pleyer, lug'at,
              saqlash shu tilga moslanadi. Topilmasa tanlangan til (slang) qoladi. */
-          var eff=(res.lang && hasCorpus(res.lang)) ? res.lang : slang;
+          var eff=corpusHitLang(res, slang);
           searchLang=eff;
           if(eff!==slang){ toast(langInfo(eff).flag+' '+t("so'z shu tildan topildi")); }
           save(); renderSearchMeta(); loadDefine(q);
@@ -1385,8 +1409,8 @@ function doSearch(){
   runSearchWidget(q);
 }
 function sCtl(act){
-  if(!sWidget) return;
-  try{ if(act==='next')sWidget.next(); else if(act==='prev')sWidget.previous(); else if(act==='slow')sWidget.setSpeed(0.5);}catch(e){}
+  var w=ygWidgets.search; if(!w) return;
+  try{ if(act==='next')w.next(); else if(act==='prev')w.previous(); else if(act==='slow')w.setSpeed(0.5);}catch(e){}
 }
 
 /* ---- So'z ma'nolari (AI lug'at) ---- */
@@ -1494,11 +1518,12 @@ function toggleSave(word, lang, def){
   }
   save();
 }
-var savedWidgets={};
 var _svList=[];   // indeks -> saqlangan element (noyob DOM id uchun)
 function renderSaved(){
   var el=document.getElementById('savedList'); if(!el) return;
-  savedWidgets={};   // qayta chizishda eski widgetlar bekor bo'ladi
+  /* Qayta chizishda eski sv-* vidjet keshini bo'shatamiz (DOM baribir yangi —
+     fabrika o'zi ham tekshiradi, bu faqat xotirani toza tutish uchun) */
+  Object.keys(ygWidgets).forEach(function(k){ if(k.indexOf('sv')===0) delete ygWidgets[k]; });
   _svList=[];
   var keys=Object.keys(S.saved);
   if(!keys.length){
@@ -1527,19 +1552,7 @@ function renderSaved(){
          '<div class="sv-body">'+defInnerHtml(it.def||{})+
            '<div class="sv-vid">'+(S.pro
              ? '<button class="svid" onclick="savedVideo('+i+')">'+t("▶ Videoni ko'rish")+'</button>'+
-               '<div class="sload" id="svload-'+i+'" style="display:none;margin-top:8px"><span class="spin"></span><span>'+t("Videolar qidirilmoqda…")+'</span></div>'+
-               '<div class="spbox" id="sv'+i+'Box" style="display:none;margin-top:8px">'+
-                 '<div class="spvid"><div id="sv'+i+'YT"></div></div>'+
-                 '<div class="spsub" id="sv'+i+'Sub"></div>'+
-                 '<div class="spcnt" id="sv'+i+'Cnt"></div>'+
-                 '<a class="spad" id="sv'+i+'Ad" style="display:none" target="_blank" rel="noopener"><img id="sv'+i+'AdImg" alt="Reklama"></a>'+
-                 '<div class="ygctrl" style="display:flex;margin-top:2px">'+
-                   '<button class="cbtn" onclick="spCtl(\'prev\')">'+t("⏮ Oldingi")+'</button>'+
-                   '<button class="cbtn" onclick="spCtl(\'slow\')">'+t("🐢 Sekin")+'</button>'+
-                   '<button class="cbtn" onclick="spCtl(\'next\')">'+t("Keyingi ⏭")+'</button>'+
-                 '</div>'+
-               '</div>'+
-               '<div class="ygslot" id="svslot-'+i+'" style="display:none;margin-top:8px"></div>'
+               spVideoBlockHtml('sv'+i, 'svload-'+i, 'svslot-'+i)
              : '<button class="btn gold" onclick="go(\'pro\')">'+t("🎬 Pro bilan videosini ko'ring")+'</button>'
            )+'</div>'+
          '</div>'+
@@ -1557,46 +1570,17 @@ function removeSaved(i){
   if(SERVER) api('unsave_word',{q:it.word, lang:it.lang}).catch(function(){});
   toast(t("O'chirildi"));
 }
-/* Pro: saqlangan so'z videosini shu yerda ochish. Ingliz uchun O'Z PLEYERimiz
-   (bazadan qidirib topsak), aks holda / topilmasa YouGlish zaxira. */
+/* Pro: saqlangan so'z videosi — umumiy corpusFirstVideo yadrosi orqali.
+   Korpusdan topilsa Seyly pleyer shu yerda, aks holda YouGlish zaxira. */
 function savedVideo(i){
   if(!S.pro){ go('pro'); return; }
   var it=_svList[i]; if(!it) return;
   var el=document.getElementById('svi-'+i); if(el) el.classList.add('open');
-
-  /* Ingliz/rus: avval o'z bazadan qidiramiz — topilsa Seyly pleyer shu yerda. */
-  if(hasCorpus(it.lang) && SERVER){
-    var load=document.getElementById('svload-'+i); if(load) load.style.display='flex';
-    api(it.lang+'_search',{q:it.word}).then(function(res){
-      if(load) load.style.display='none';
-      if(res && res.ok && res.results && res.results.length){
-        openSeylyPlayer(res.results, it.word, spMountSaved(i), it.lang);
-      } else {
-        openSavedYG(i, it);
-      }
-    }).catch(function(){ if(load) load.style.display='none'; openSavedYG(i, it); });
-    return;
-  }
-  openSavedYG(i, it);
+  corpusFirstVideo(it.word, it.lang, spMountSaved(i), 'svload-'+i, function(){ openSavedYG(i, it); });
 }
 function openSavedYG(i, it){
-  var slot=document.getElementById('svslot-'+i);
-  if(!slot) return;
-  slot.style.display='block';
-  if(savedWidgets[i]) return;
-  slot.innerHTML='<div class="ph" id="svph-'+i+'">'+t("Video yuklanmoqda…")+'</div><div id="svw-'+i+'"></div>';
-  ensureYG(function(err){
-    var ph=document.getElementById('svph-'+i);
-    if(err||!window.YG){ if(ph) ph.textContent=t("🎬 Video Telegram/brauzerda ochiladi."); return; }
-    try{
-      savedWidgets[i]=new YG.Widget("svw-"+i,{ width: slot.clientWidth||320, components:8,
-        events:{ onFetchDone:function(d){ if(ph) ph.style.display=(d&&d.totalResult===0)?'block':'none';
-                   if(d&&d.totalResult===0&&ph) ph.textContent=t("Bu so'z uchun video topilmadi."); },
-                 onVideoChange:function(d){ enIngestFromYG(d, it.lang); },  /* jimgina bazamizga qo'shamiz (faqat en) */
-                 onError:function(){ if(ph){ph.style.display='block';ph.textContent=t("Video yuklashda xatolik.");} } }});
-      savedWidgets[i].fetch(it.word, langInfo(it.lang).yg);
-    }catch(e){ if(ph) ph.textContent=t("🎬 Video ochiladi."); }
-  });
+  openYG({ slotId:'svslot-'+i, tag:'sv'+i, key:'sv'+i, q:it.word, lang:it.lang,
+           onVideo:function(d){ enIngestFromYG(d, it.lang); } });   /* jimgina bazamizga qo'shamiz */
 }
 document.getElementById('sInput').addEventListener('keydown',function(e){ if(e.key==='Enter') doSearch(); });
 
