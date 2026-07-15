@@ -928,12 +928,21 @@ function openBody(id){
         '<button class="sbtn v" onclick="phVideo('+id+')">'+t("▶ Videoni ko'rish")+'</button>'+
         '<button class="sbtn t" onclick="speak(\''+encodeURIComponent(p.ru)+'\',\''+langInfo(p._lang||'ru').tts+'\')">'+t("🔊 Talaffuz")+'</button>'+
       '</div>'+
-      '<div class="ygslot" id="slot-'+id+'" style="display:none"></div>'+
-      '<div class="ygctrl" id="ctl-'+id+'" style="display:none">'+
-        '<button class="cbtn" onclick="wCtl('+id+',\'prev\')">'+t("⏮ Oldingi")+'</button>'+
-        '<button class="cbtn" onclick="wCtl('+id+',\'slow\')">'+t("🐢 Sekin")+'</button>'+
-        '<button class="cbtn" onclick="wCtl('+id+',\'next\')">'+t("Keyingi ⏭")+'</button>'+
-      '</div>';
+      /* Seyly pleyer (o'z korpusimiz) — search page bilan bir xil komponent.
+         Korpusda topilmasa / korpussiz til (de) → YouGlish zaxira (catslot). */
+      '<div class="sload" id="catload-'+id+'" style="display:none;margin-top:8px"><span class="spin"></span><span>'+t("Videolar qidirilmoqda…")+'</span></div>'+
+      '<div class="spbox" id="cat'+id+'Box" style="display:none;margin-top:8px">'+
+        '<div class="spvid"><div id="cat'+id+'YT"></div></div>'+
+        '<div class="spsub" id="cat'+id+'Sub"></div>'+
+        '<div class="spcnt" id="cat'+id+'Cnt"></div>'+
+        '<a class="spad" id="cat'+id+'Ad" style="display:none" target="_blank" rel="noopener"><img id="cat'+id+'AdImg" alt="Reklama"></a>'+
+        '<div class="ygctrl" style="display:flex;margin-top:2px">'+
+          '<button class="cbtn" onclick="spCtl(\'prev\')">'+t("⏮ Oldingi")+'</button>'+
+          '<button class="cbtn" onclick="spCtl(\'slow\')">'+t("🐢 Sekin")+'</button>'+
+          '<button class="cbtn" onclick="spCtl(\'next\')">'+t("Keyingi ⏭")+'</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ygslot" id="catslot-'+id+'" style="display:none;margin-top:8px"></div>';
   }
   document.getElementById('phi-'+id).classList.add('open');
   if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
@@ -1013,6 +1022,7 @@ function flushYT(err){ var q=ytQueue.slice(); ytQueue=[]; q.forEach(function(f){
 var sp={results:[], q:'', idx:0, player:null, timer:null, cues:[], curCue:-1, slow:false, mount:null, lang:'en'};
 function spMountSearch(){ return {key:'search', box:'spBox', yt:'spYT', sub:'spSub', cnt:'spCnt', ad:'spAd', adImg:'spAdImg'}; }
 function spMountSaved(i){ var s='sv'+i; return {key:'saved-'+i, box:s+'Box', yt:s+'YT', sub:s+'Sub', cnt:s+'Cnt', ad:s+'Ad', adImg:s+'AdImg'}; }
+function spMountCat(id){ var s='cat'+id; return {key:'cat-'+id, box:s+'Box', yt:s+'YT', sub:s+'Sub', cnt:s+'Cnt', ad:s+'Ad', adImg:s+'AdImg'}; }
 /* Barcha tillar uchun: harf/raqamdan boshqa hammasini (apostrof ham) olib tashlaydi
    (\p{L}=istalgan harf — kirill/lotin/umlaut, \p{N}=raqam). Kirill so'z ham,
    "Nancy's" kabi egalik shakli ham to'g'ri normallashadi. */
@@ -1203,30 +1213,47 @@ function ensureYG(cb){
 window.onYouglishAPIReady=function(){ ygState="ready"; flushYG(); };
 function flushYG(err){ var q=ygQueue.slice(); ygQueue=[]; q.forEach(function(f){f(err);}); }
 
-var widgets={};
+/* Kategoriya iborasi videosi — search/saved bilan BIR XIL oqim:
+   en/rus → o'z korpusdan qidirib Seyly pleyer (spMountCat), topilmasa/de → YouGlish. */
 function phVideo(id){
-  var p=byId[id];
-  var slot=document.getElementById('slot-'+id);
+  var p=byId[id]; if(!p) return;
+  var lang=p._lang||'ru';
+  if(hasCorpus(lang) && SERVER){
+    var load=document.getElementById('catload-'+id); if(load) load.style.display='flex';
+    api(lang+'_search',{q:p.ru}).then(function(res){
+      if(load) load.style.display='none';
+      if(res && res.ok && res.results && res.results.length){
+        var eff=(res.lang && hasCorpus(res.lang)) ? res.lang : lang;   // pleyer cue'lari shu til bo'yicha
+        openSeylyPlayer(res.results, p.ru, spMountCat(id), eff);
+      } else {
+        openCatYG(id, p);
+      }
+    }).catch(function(){ if(load) load.style.display='none'; openCatYG(id, p); });
+    return;
+  }
+  openCatYG(id, p);
+}
+/* YouGlish zaxira (korpussiz til yoki korpusda topilmagan ibora).
+   Ko'rsatilgan videoni jimgina bazamizga qo'shamiz — korpus vaqt o'tib boyiydi. */
+var catWidgets={};
+function openCatYG(id, p){
+  var slot=document.getElementById('catslot-'+id);
+  if(!slot) return;
   slot.style.display='block';
-  document.getElementById('ctl-'+id).style.display='flex';
-  if(widgets[id]) return;
-  slot.innerHTML='<div class="ph" id="wph-'+id+'">'+t("Video yuklanmoqda…")+'</div><div id="w-'+id+'"></div>';
+  if(catWidgets[id]) return;
+  slot.innerHTML='<div class="ph" id="catph-'+id+'">'+t("Video yuklanmoqda…")+'</div><div id="catw-'+id+'"></div>';
   ensureYG(function(err){
-    var ph=document.getElementById('wph-'+id);
+    var ph=document.getElementById('catph-'+id);
     if(err||!window.YG){ if(ph) ph.textContent=t("🎬 Video Telegram/brauzerda ochiladi."); return; }
     try{
-      widgets[id]=new YG.Widget("w-"+id,{ width: slot.clientWidth||320, components:8,
-        events:{ onFetchDone:function(d){ if(ph) ph.style.display = (d&&d.totalResult===0)?'block':'none';
+      catWidgets[id]=new YG.Widget("catw-"+id,{ width: slot.clientWidth||320, components:8,
+        events:{ onFetchDone:function(d){ if(ph) ph.style.display=(d&&d.totalResult===0)?'block':'none';
                    if(d&&d.totalResult===0&&ph) ph.textContent=t("Bu ibora uchun video topilmadi."); },
-                 onVideoChange:function(d){ logVideo(id, d); },
+                 onVideoChange:function(d){ logVideo(id, d); enIngestFromYG(d, p._lang||'ru'); },
                  onError:function(){ if(ph){ph.style.display='block';ph.textContent=t("Video yuklashda xatolik.");} } }});
-      widgets[id].fetch(p.ru, langInfo(p._lang||'ru').yg);
+      catWidgets[id].fetch(p.ru, langInfo(p._lang||'ru').yg);
     }catch(e){ if(ph) ph.textContent=t("🎬 Video Telegram/brauzerda ochiladi."); }
   });
-}
-function wCtl(id,act){
-  var w=widgets[id]; if(!w) return;
-  try{ if(act==='next')w.next(); else if(act==='prev')w.previous(); else if(act==='slow')w.setSpeed(0.5);}catch(e){}
 }
 /* YouGlish ochgan videoni jimgina bazaga yozamiz (o'z video-keshimiz boyiydi) */
 var loggedVids={};
