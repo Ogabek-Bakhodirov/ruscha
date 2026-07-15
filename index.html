@@ -169,6 +169,8 @@
   .lbtn.on{border-color:var(--accent-2);color:var(--text);background:linear-gradient(135deg,rgba(91,140,255,.14),rgba(139,91,255,.14))}
   .lbtn .fl{font-size:16px}
   .lbtn.add{padding:7px 11px;font-size:15px;line-height:1}
+  .slangbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+  .slang-lbl{align-self:center;opacity:.65;font-size:13px;font-weight:600}
   .cat .soon{display:inline-block;font-size:10px;font-weight:800;color:var(--gold);border:1px solid var(--gold);border-radius:99px;padding:2px 8px;margin-top:6px}
   .defcard{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
   .defcard.loading{color:var(--muted);font-size:13px;text-align:center;padding:16px}
@@ -283,6 +285,7 @@
 <div class="page" id="pg-search">
   <h2 style="margin:2px 0 4px;font-size:20px" data-i18n="🔍 So'z qidirish">🔍 So'z qidirish</h2>
   <p class="muted" style="font-size:12.5px;margin:0 0 14px" data-i18n="Istalgan so'z yoki iborani yozing — real videolarda qanday aytilishini va ma'nolarini ko'rasiz.">Istalgan so'z yoki iborani yozing — real videolarda qanday aytilishini va ma'nolarini ko'rasiz.</p>
+  <div class="slangbar" id="searchLangBar"></div>
   <div class="searchbar">
     <input id="sInput" type="text" placeholder="Masalan: спасибо" autocomplete="off">
     <button onclick="doSearch()">🔍</button>
@@ -478,7 +481,7 @@ function api(action, extra){
 
 /* ================== HOLAT (localStorage) ================== */
 var DEF = { onboarded:false, uiLang:'uz', level:null, levels:{}, goal:null, interests:[], daily:10, pro:false, proUntil:null,
-            langs:['ru'], curLang:'ru', accent:null, saved:{},
+            langs:['ru'], curLang:'ru', srchLang:null, accent:null, saved:{},
             learned:{}, day:"", todayNew:0, sDay:"", sCount:0, streak:0, lastDay:"" };
 var S;
 try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem('ru_state')||'{}')); }
@@ -506,7 +509,10 @@ function hasCorpus(c){ return c==='en' || c==='ru'; }
 /* Oxirgi qidiruv natijasi qaysi tilda topilgani (fallback bo'lishi mumkin):
    define va saqlash shu tilga moslanadi. null = joriy til (S.curLang). */
 var searchLang=null;
-function effSearchLang(){ return searchLang || S.curLang; }
+/* Qidiruv sahifasi O'ZINING tili bor — home tilidan mustaqil. User qidiruvdan oldin
+   tanlaydi (searchLangBar). Tanlamagan bo'lsa default = home tili, keyin mustaqil. */
+function curSearchLang(){ var c=S.srchLang; return (c && S.langs && S.langs.indexOf(c)>=0) ? c : S.curLang; }
+function effSearchLang(){ return searchLang || curSearchLang(); }
 /* Kategoriyalar — barcha tillar uchun bir xil tuzilma */
 var CAT_META=[
   {key:"salomlashish", title:"Salomlashish va tanishuv", emoji:"👋"},
@@ -543,7 +549,7 @@ function go(p){
   });
   document.getElementById('nav').style.display = (p==='ob') ? 'none':'flex';
   if(p==='home') renderHome();
-  if(p==='search') renderSearchMeta();
+  if(p==='search'){ renderSearchLangs(); renderSearchMeta(); }
   if(p==='saved') renderSaved();
   if(p==='pro'){ updateProStatus(); if(IS_OWNER){ loadCodes(); loadFeedback(); } }
   window.scrollTo(0,0);
@@ -847,7 +853,7 @@ function setAccent(a){
   if(S.accent===a) return;
   S.accent=a; save();
   if(SERVER) api('set_accent',{accent:a}).catch(function(){});
-  renderLangSwitch();
+  renderLangSwitch(); renderSearchLangs();
   toast(t('Talaffuz: {a}',{a:a.toUpperCase()}));
   if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
 }
@@ -1274,9 +1280,40 @@ function renderSearchMeta(){
   document.getElementById('sLock').style.display = (!S.pro && S.sCount>=FREE_SEARCH) ? 'block':'none';
   var inp=document.getElementById('sInput');
   if(inp){
+    var sl=curSearchLang();
     var ex={ru:'спасибо', en:'thank you', de:'danke'};
-    inp.placeholder=t('Masalan:')+' '+(ex[S.curLang]||ex.ru)+' '+langInfo(S.curLang).flag;
+    inp.placeholder=(ex[sl]||ex.ru)+' '+langInfo(sl).flag;
   }
+}
+/* Qidiruv sahifasi til tanlagichi — home tilidan mustaqil, doim ko'rinib turadi. */
+function renderSearchLangs(){
+  var el=document.getElementById('searchLangBar'); if(!el) return;
+  if(!S.langs || !S.langs.length) S.langs=['ru'];
+  var cur=curSearchLang();
+  var h='<span class="slang-lbl">'+t('Qidiruv tili')+':</span>';
+  S.langs.forEach(function(c){
+    var L=langInfo(c);
+    h+='<button class="lbtn'+(c===cur?' on':'')+'" onclick="setSearchLang(\''+c+'\')">'+
+       '<span class="fl">'+L.flag+'</span>'+c.toUpperCase()+'</button>';
+  });
+  /* Ingliz qidiruv tili tanlansa — talaffuz (accent) qidiruvga ta'sir qiladi */
+  if(cur==='en'){
+    h+='<span style="flex-basis:100%;height:0"></span>';
+    h+='<span class="slang-lbl">'+t('Talaffuz')+':</span>';
+    h+='<button class="lbtn'+(S.accent==='us'?' on':'')+'" onclick="setAccent(\'us\')"><span class="fl">🇺🇸</span>US</button>';
+    h+='<button class="lbtn'+(S.accent==='uk'?' on':'')+'" onclick="setAccent(\'uk\')"><span class="fl">🇬🇧</span>UK</button>';
+  }
+  el.innerHTML=h;
+}
+function setSearchLang(c){
+  if(!S.langs || S.langs.indexOf(c)<0) return;
+  if(curSearchLang()===c){ return; }
+  S.srchLang=c; searchLang=c; save();
+  /* Til o'zgardi — eski (boshqa tildagi) natija/pleyerni tozalaymiz, chalkashmasin */
+  hideSeylyPlayer(); hideYGSearch(); hideSearchLoading();
+  var dc=document.getElementById('sDefine'); if(dc){ dc.style.display='none'; dc.innerHTML=''; }
+  renderSearchLangs(); renderSearchMeta();
+  if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
 }
 function runSearchWidget(q){
   hideSearchLoading();
@@ -1288,9 +1325,9 @@ function runSearchWidget(q){
       if(!sWidget){
         slot.innerHTML='<div id="sW"></div>';
         sWidget=new YG.Widget("sW",{ width: slot.clientWidth||320, components:8,
-          events:{ onVideoChange:function(d){ enIngestFromYG(d); } }});   // ko'rsatilgan video jimgina bazamizga qo'shiladi
+          events:{ onVideoChange:function(d){ enIngestFromYG(d, curSearchLang()); } }});   // ko'rsatilgan video jimgina bazamizga qo'shiladi
       }
-      sWidget.fetch(q, langInfo(S.curLang).yg);
+      sWidget.fetch(q, langInfo(curSearchLang()).yg);
     }catch(e){ slot.innerHTML='<div class="ph">'+t("Video yuklashda xatolik.")+'</div>'; }
   });
 }
@@ -1299,7 +1336,8 @@ function doSearch(){
   resetDaily();
   var q=document.getElementById('sInput').value.trim();
   if(!q){ toast(t("So'z yozing 🙂")); return; }
-  searchLang=S.curLang;   // default: joriy til (korpus fallback buni yangilashi mumkin)
+  var slang=curSearchLang();   // qidiruv sahifasida user TANLAGAN til (home'dan mustaqil)
+  searchLang=slang;
   var _dc=document.getElementById('sDefine'); if(_dc) _dc.style.display='none';  // eski ma'nolarni yopamiz
 
   if(SERVER){
@@ -1309,21 +1347,21 @@ function doSearch(){
 
     /* Ingliz VA rus: avval O'Z BAZAMIZdan (en_search/ru_search — limit server ichida).
        Topilsa Seyly pleyer, topilmasa YouGlish (zaxira) + fon'da bazani boyitish. */
-    if(hasCorpus(S.curLang)){
-      var lang=S.curLang;
+    if(hasCorpus(slang)){
+      var lang=slang;
       api(lang+'_search',{q:q}).then(function(res){
         searchBusy=false;
         if(res && res.error==='limit'){ hideSearchLoading(); if(typeof res.searchCount==='number') S.sCount=res.searchCount; renderSearchMeta(); toast(t("Bugungi bepul qidiruvlar tugadi")); return; }
         if(res && res.ok){
           if(!S.pro) S.sCount++;   // server 1 taga oshirdi (*_search ichida, fallback qayta hisoblamaydi)
           /* Natija qaysi tilda topildi — fallback bo'lsa boshqa til. Pleyer, lug'at,
-             saqlash shu tilga moslanadi. Topilmasa joriy til (S.curLang) qoladi. */
-          var eff=(res.lang && hasCorpus(res.lang)) ? res.lang : S.curLang;
+             saqlash shu tilga moslanadi. Topilmasa tanlangan til (slang) qoladi. */
+          var eff=(res.lang && hasCorpus(res.lang)) ? res.lang : slang;
           searchLang=eff;
-          if(eff!==S.curLang){ toast(langInfo(eff).flag+' '+t("so'z shu tildan topildi")); }
+          if(eff!==slang){ toast(langInfo(eff).flag+' '+t("so'z shu tildan topildi")); }
           save(); renderSearchMeta(); loadDefine(q);
           if(res.results && res.results.length){ openSeylyPlayer(res.results, q, null, eff); }
-          else { searchLang=S.curLang; runSearchWidget(q); }
+          else { searchLang=slang; runSearchWidget(q); }
         } else { hideSearchLoading(); toast(t("Xatolik — qayta urinib ko'ring")); }
       }).catch(function(){ searchBusy=false; hideSearchLoading(); toast(t("Internet xatosi")); });
       return;
