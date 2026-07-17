@@ -951,7 +951,7 @@ function renderStreakBox(){
     ? 'linear-gradient(135deg,rgba(55,211,155,.15),rgba(91,140,255,.10))'
     : 'linear-gradient(135deg,rgba(246,140,45,.18),rgba(246,196,69,.12))';
   box.style.display='block';
-  box.innerHTML='<div style="background:'+bg+';border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin:10px 0 0;display:flex;align-items:center;gap:10px">'+
+  box.innerHTML='<div style="background:'+bg+';border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin:10px 0 12px;display:flex;align-items:center;gap:10px">'+
     '<div style="font-size:22px">'+(learnedToday?'🔥':'⏳')+'</div>'+
     '<div style="flex:1;min-width:0">'+
       '<div style="font-size:14px;font-weight:800">'+t("🔥 {d} kunlik seriya",{d:s})+fzTxt+'</div>'+
@@ -970,7 +970,7 @@ function renderReviewBox(){
   var n=reviewDueCount();
   if(n<3){ box.style.display='none'; return; }   // kamida 3 ta so'z (shovqin bo'lmasin)
   box.style.display='block';
-  box.innerHTML='<div onclick="go(\'saved\')" style="cursor:pointer;background:linear-gradient(135deg,rgba(139,91,255,.14),rgba(91,140,255,.10));border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin:10px 0 0;display:flex;align-items:center;gap:10px">'+
+  box.innerHTML='<div onclick="go(\'saved\')" style="cursor:pointer;background:linear-gradient(135deg,rgba(139,91,255,.14),rgba(91,140,255,.10));border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin:10px 0 12px;display:flex;align-items:center;gap:10px">'+
     '<div style="font-size:20px">🔁</div>'+
     '<div style="flex:1;min-width:0">'+
       '<div style="font-size:14px;font-weight:800">'+t("🔁 {n} ta so'zni takrorlang",{n:n})+'</div>'+
