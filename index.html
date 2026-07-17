@@ -1119,12 +1119,12 @@ function celebrateOnboarding(){
     var s=document.createElement('style'); s.id='celeStyle';
     s.textContent=''+
     '.cele{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(8,10,15,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:celeBg .3s ease}'+
-    '.cele-card{position:relative;text-align:center;padding:32px 30px;border-radius:24px;background:linear-gradient(160deg,#20242d,#161920);border:1px solid var(--line);box-shadow:0 22px 60px rgba(0,0,0,.55);animation:celePop .6s cubic-bezier(.18,1.45,.4,1)}'+
+    '.cele-card{position:relative;text-align:center;padding:32px 30px;border-radius:24px;background:linear-gradient(160deg,#20242d,#161920);border:1px solid rgba(255,255,255,.10);box-shadow:0 22px 60px rgba(0,0,0,.55);animation:celePop .6s cubic-bezier(.18,1.45,.4,1)}'+
     '.cele-flame{font-size:66px;line-height:1;animation:celeFlame 1.1s ease-in-out infinite}'+
-    '.cele-streak{font-size:44px;font-weight:900;color:var(--gold);margin-top:2px;text-shadow:0 0 22px rgba(246,196,69,.5)}'+
-    '.cele-t{font-size:16px;font-weight:800;margin-top:2px}'+
-    '.cele-goal{margin-top:16px;background:var(--card-2);border:1px solid var(--line);border-radius:14px;padding:11px 16px;font-size:14px;font-weight:600}'+
-    '.cele-goal b{color:var(--accent);font-size:16px}'+
+    '.cele-streak{font-size:44px;font-weight:900;color:#f6c445;margin-top:2px;text-shadow:0 0 22px rgba(246,196,69,.5)}'+
+    '.cele-t{font-size:16px;font-weight:800;margin-top:2px;color:#fff}'+
+    '.cele-goal{margin-top:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:11px 16px;font-size:14px;font-weight:600;color:#e7ecf5}'+
+    '.cele-goal b{color:#7ea6ff;font-size:16px}'+
     '.confetti{position:absolute;top:38%;left:50%;width:9px;height:9px;border-radius:2px;opacity:0;animation:celeConf 1.5s ease-out forwards}'+
     '@keyframes celeBg{from{opacity:0}to{opacity:1}}'+
     '@keyframes celePop{0%{transform:scale(.5);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:1}}'+
