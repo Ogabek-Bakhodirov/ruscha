@@ -1212,7 +1212,8 @@ function corpusFirstVideo(q, lang, mount, loadId, fallback){
   api(lang+'_search',{q:q}).then(function(res){
     if(load) load.style.display='none';
     if(res && res.ok && res.results && res.results.length){
-      openSeylyPlayer(res.results, q, mount, corpusHitLang(res, lang));
+      // Server ko'p so'zli iborani kalit so'z bilan topgan bo'lsa, shu so'zni gold qilamiz
+      openSeylyPlayer(res.results, res.matched || q, mount, corpusHitLang(res, lang));
     } else fallback();
   }).catch(function(){ if(load) load.style.display='none'; fallback(); });
 }
@@ -1571,7 +1572,7 @@ function doSearch(){
           searchLang=eff;
           if(eff!==slang){ toast(langInfo(eff).flag+' '+t("so'z shu tildan topildi")); }
           save(); renderSearchMeta(); loadDefine(q);
-          if(res.results && res.results.length){ openSeylyPlayer(res.results, q, null, eff); }
+          if(res.results && res.results.length){ openSeylyPlayer(res.results, res.matched || q, null, eff); }
           else { searchLang=slang; runSearchWidget(q); }
         } else {
           /* Korpus javob bermadi (server xatosi yoki hali qo'llab-quvvatlanmagan til, masalan de
