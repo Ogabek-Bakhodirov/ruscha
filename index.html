@@ -1191,6 +1191,24 @@ function corpusFirstVideo(q, lang, mount, loadId, fallback){
    (\p{L}=istalgan harf — kirill/lotin/umlaut, \p{N}=raqam). Kirill so'z ham,
    "Nancy's" kabi egalik shakli ham to'g'ri normallashadi. */
 function normTok(w){ return String(w).toLowerCase().replace(/[^\p{L}\p{N}]/gu,''); }
+/* Korpus qidiruvi uchun ibora -> kalit so'z. Bazamiz kichik; butun jumlani ("Сколько
+   стоит килограмм?") qidirsak bitta cue'да deyarli hech qachon mos kelmaydi -> 0 natija
+   -> YouGlish. Shuning uchun ko'p so'zli iborada eng MAZMUNLI so'zni (eng uzun, stop-so'z
+   bo'lmagan) qidiramiz. Bitta so'z bo'lsa — o'zini. */
+var STOPW = {
+  ru:{ 'и':1,'в':1,'во':1,'на':1,'с':1,'со':1,'по':1,'за':1,'у':1,'к':1,'о':1,'об':1,'от':1,'до':1,'из':1,'а':1,'но':1,'что':1,'как':1,'это':1,'вы':1,'ты':1,'я':1,'мы':1,'он':1,'она':1,'они':1,'не':1,'да':1,'же':1,'бы':1,'ли':1,'то':1,'для':1,'или':1 },
+  en:{ 'the':1,'a':1,'an':1,'to':1,'of':1,'in':1,'on':1,'at':1,'is':1,'are':1,'am':1,'be':1,'do':1,'does':1,'did':1,'you':1,'i':1,'it':1,'and':1,'or':1,'how':1,'what':1,'much':1,'many':1,'for':1,'this':1,'that':1,'my':1,'your':1 },
+  de:{ 'der':1,'die':1,'das':1,'und':1,'ist':1,'zu':1,'in':1,'den':1,'dem':1,'ein':1,'eine':1,'ich':1,'du':1,'sie':1,'wie':1,'was':1,'ist':1,'auf':1,'mit':1,'für':1,'ist':1,'es':1,'wir':1 }
+};
+function corpusQuery(phrase, lang){
+  var toks=String(phrase||'').trim().split(/\s+/);
+  if(toks.length<=1) return phrase;
+  var sw=STOPW[lang]||{};
+  var cand=toks.map(normTok).filter(function(w){ return w.length>=3 && !sw[w]; });
+  if(!cand.length) cand=toks.map(normTok).filter(Boolean);   // hammasi stop-so'z bo'lsa
+  if(!cand.length) return phrase;
+  return cand.sort(function(a,b){ return b.length-a.length; })[0];   // eng uzun mazmunli so'z
+}
 /* Cue so'zi qidirilgan so'zga mos keladimi: aniq teng, yoki so'z-boshi mos +
    ortiqcha 2 belgigacha (egalik/ko'plik: "Nancy's"->"Nancy", "cats"->"cat").
    Bu "category" kabi uzun so'zlarni noto'g'ri belgilamaydi. */
@@ -1447,7 +1465,10 @@ function openYG(opts){
 /* Kategoriya iborasi videosi — umumiy corpusFirstVideo yadrosi orqali (search/saved bilan bir xil) */
 function phVideo(id){
   var p=byId[id]; if(!p) return;
-  corpusFirstVideo(p.ru, p._lang||'ru', spMountCat(id), 'catload-'+id, function(){ openCatYG(id, p); });
+  var lang=p._lang||'ru';
+  // Korpusda kalit so'z bilan qidiramiz (butun jumla kichik bazada mos kelmaydi);
+  // topilmasa YouGlish butun iborani (p.ru) qidiradi — u yerda katta korpus bor.
+  corpusFirstVideo(corpusQuery(p.ru, lang), lang, spMountCat(id), 'catload-'+id, function(){ openCatYG(id, p); });
 }
 /* YouGlish zaxira — umumiy fabrika orqali. logVideo: ibora-video keshi boyiydi. */
 function openCatYG(id, p){
