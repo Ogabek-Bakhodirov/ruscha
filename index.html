@@ -1247,7 +1247,9 @@ function togglePh(id){
 /* Reklama banner — hozircha statik (inline SVG). Keyinchalik adminka orqali
    rasm upload qilinadi va init javobida {ad:{img,url}} kelib shu obyektni
    almashtiradi (pastdagi init hook allaqachon tayyor). */
-var AD_BANNER = { img: null };   // faol banner init javobidan keladi (yo'q bo'lsa ko'rinmaydi)
+/* Tillar bo'yicha bannerlar: {ru:{id,img}, en:{...}, de:{...}} — init javobidan.
+   Widget qaysi til pleyerida bo'lsa (sp.lang), o'sha tilning banneri ko'rinadi. */
+var ADS_BY_LANG = {};
 function adPlaceholder(){
   /* 640x220 ~ mobil banner uchun qulay nisbat. Foydalanuvchi upload qilgan rasm
      (640x200 / 728x200 kabi) shu joyga yaxshi tushadi. */
@@ -1569,11 +1571,13 @@ function renderAd(){
   if(!sp.mount) return;
   var a=document.getElementById(sp.mount.ad); if(!a) return;
   if(sp.mount.key==='ob'){ a.style.display='none'; return; }   // onboarding tatib ko'rish — reklamasiz
-  if(!AD_BANNER || !AD_BANNER.img){ a.style.display='none'; return; }
-  document.getElementById(sp.mount.adImg).src=AD_BANNER.img;
+  /* Widget tiliga mos banner (ru pleyer -> ru banner). Shu til uchun banner yo'q -> ko'rsatmaymiz. */
+  var b = ADS_BY_LANG[sp.lang] || null;
+  if(!b || !b.img){ a.style.display='none'; return; }
+  document.getElementById(sp.mount.adImg).src=b.img;
   a.removeAttribute('href');   // product placement — bosilmaydi (havola yo'q)
   a.style.display='block';
-  adOnShow(AD_BANNER.id);       // o'lchov: impression + ko'rinish vaqti
+  adOnShow(b.id);              // o'lchov: impression + ko'rinish vaqti
 }
 /* ===== Widget banner o'lchovi (product placement: ko'rsatuv + ko'rinish soniyalari) =====
    1 pleyer-ochilishi = 1 ko'rsatuv. Banner ko'rinib turgan (pleyer ochiq + ilova old planda)
@@ -1586,7 +1590,7 @@ function adOnShow(adId){
   adTrack.imp += 1;
   if(!adTrack.ticker){
     adTrack.ticker = setInterval(function(){
-      if(sp.mount && AD_BANNER && AD_BANNER.img && !document.hidden){
+      if(sp.mount && adTrack.id && !document.hidden){
         adTrack.sec += 1;
         if(adTrack.sec >= 15) adFlush();   // har ~15s
       }
@@ -2162,7 +2166,8 @@ function boot(d){
       S.interests=res.user.interests||[];
       S.langs=(res.user.langs&&res.user.langs.length)?res.user.langs:(S.langs&&S.langs.length?S.langs:['ru']);
       S.accent=res.user.accent||null;   // ingliz accent (us/uk)
-      AD_BANNER = (res.ad && res.ad.img) ? res.ad : { img:null };   // adminkadan faol banner (yo'q bo'lsa ko'rinmaydi)
+      /* Tillar bo'yicha bannerlar; eski server javobi (faqat res.ad) kelsa — ru sifatida */
+      ADS_BY_LANG = res.ads || ((res.ad && res.ad.img) ? { ru: res.ad } : {});
       if(S.langs.indexOf(S.curLang)<0) S.curLang=S.langs[0];
       S.daily=res.user.daily||10;
       S.pro=!!res.user.pro; S.proUntil=res.user.pro_until||null;
