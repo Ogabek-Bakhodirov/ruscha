@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Seyly</title>
+<!-- Tezlik: video/api hostlariga DNS+TLS ni oldindan ochamiz (birinchi ochilish tezlashadi) -->
+<link rel="preconnect" href="https://www.youtube.com">
+<link rel="preconnect" href="https://i.ytimg.com">
+<link rel="preconnect" href="https://ubctutftqgbgcevfziil.supabase.co">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root, html[data-theme="dark"]{
@@ -1178,30 +1182,50 @@ function openBody(id){
   if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
 }
 var learnBusy=false;
+/* Optimistik ochilish orqaga qaytarilganda (limit/xato) vizual holatni tiklaydi. */
+function undoDone(id){
+  var st=document.getElementById('st-'+id);
+  if(st){ st.classList.remove('done'); st.textContent='▶'; }
+  var item=document.getElementById('phi-'+id); if(item) item.classList.remove('open');
+  var body=document.getElementById('phb-'+id);
+  if(body){ delete body.dataset.built; body.innerHTML=''; }
+  if(sp.mount && sp.mount.key==='cat-'+id) hideSeylyPlayer();
+}
 function togglePh(id){
   var item=document.getElementById('phi-'+id);
-  if(item.classList.contains('open')){ item.classList.remove('open'); return; }
+  if(item.classList.contains('open')){
+    item.classList.remove('open');
+    /* Karta yopildi — ichidagi pleyer bo'lsa to'xtatamiz (yashirin ijro resurs yemasin) */
+    if(sp.mount && sp.mount.key==='cat-'+id) hideSeylyPlayer();
+    return;
+  }
   var isNew=!S.learned[id];
   if(!isNew){ openBody(id); return; }
 
   if(SERVER){
     if(learnBusy) return;
     learnBusy=true;
+    /* OPTIMISTIK UI: kartani DARROV ochamiz — server javobini kutmaymiz (bosishdagi
+       0.3-1.5s "o'lik" pauzani yo'qotadi). Limit/xato bo'lsa pastda orqaga qaytariladi. */
+    markDone(id); openBody(id);
     api('learn',{phrase_id:id}).then(function(res){
       learnBusy=false;
-      if(res && res.error==='limit'){ if(typeof res.todayNew==='number') S.todayNew=res.todayNew; showLock(id); return; }
+      if(res && res.error==='limit'){
+        if(typeof res.todayNew==='number') S.todayNew=res.todayNew;
+        undoDone(id); showLock(id); return;
+      }
       if(res && res.ok){
         var prev=S.todayNew, prevStreak=S.streak;
         S.learned[id]=today();
         if(typeof res.todayNew==='number') S.todayNew=res.todayNew;
         if(typeof res.streak==='number') S.streak=res.streak;
         if(typeof res.freezes==='number') S.freezes=res.freezes;
-        save(); markDone(id); openBody(id);
+        save();
         if(res.used_freeze) toast(t("❄️ Muzlatish ishlatildi — seriyangiz saqlanib qoldi!"));
         celebrateStreak(prevStreak); celebrateGoal(prev);
         renderStreakBox();
-      } else toast(t("Xatolik — qayta urinib ko'ring"));
-    }).catch(function(){ learnBusy=false; toast(t("Internet xatosi — qayta urinib ko'ring")); });
+      } else { undoDone(id); toast(t("Xatolik — qayta urinib ko'ring")); }
+    }).catch(function(){ learnBusy=false; undoDone(id); toast(t("Internet xatosi — qayta urinib ko'ring")); });
     return;
   }
 
@@ -1309,15 +1333,29 @@ function corpusHitLang(res, def){ return (res && res.lang && hasCorpus(res.lang)
    O'z bazadan qidiradi; topilsa Seyly pleyer (mount), topilmasa/korpussiz til/xato -> fallback (YouGlish).
    Qidiruv sahifasi (doSearch) atayin alohida: limit hisobi, lug'at (define) va
    til-almashish toast mas'uliyatlari bor — ularni bu yadroga aralashtirmaymiz (SRP). */
+/* Sessiya ichidagi qidiruv keshi: bir marta topilgan natija ikkinchi ochilishda
+   bir zumda chiqadi (tarmoqqa qayta bormaymiz). Ibora ro'yxati statik — xavfsiz. */
+var corpusCache={};
 function corpusFirstVideo(q, lang, mount, loadId, fallback){
   if(!(hasCorpus(lang) && SERVER)){ fallback(); return; }
+  var ck=lang+'|'+String(q).toLowerCase();
+  var c=corpusCache[ck];
+  if(c){
+    if(c.none){ fallback(); return; }
+    openSeylyPlayer(c.results, c.matched || q, mount, c.lang);
+    return;
+  }
   var load=document.getElementById(loadId); if(load) load.style.display='flex';
   api(lang+'_search',{q:q}).then(function(res){
     if(load) load.style.display='none';
     if(res && res.ok && res.results && res.results.length){
       // Server ko'p so'zli iborani kalit so'z bilan topgan bo'lsa, shu so'zni gold qilamiz
+      corpusCache[ck]={results:res.results, matched:res.matched, lang:corpusHitLang(res, lang)};
       openSeylyPlayer(res.results, res.matched || q, mount, corpusHitLang(res, lang));
-    } else fallback();
+    } else {
+      if(res && res.ok) corpusCache[ck]={none:1};   // aniq "topilmadi" — keshlanadi; tarmoq xatosi keshlanmaydi
+      fallback();
+    }
   }).catch(function(){ if(load) load.style.display='none'; fallback(); });
 }
 /* Barcha tillar uchun: harf/raqamdan boshqa hammasini (apostrof ham) olib tashlaydi
@@ -1411,6 +1449,12 @@ function spLoad(i){
     sp.player.loadVideoById({videoId:r.video_id, startSeconds:start});
     if(sp.slow){ try{ sp.player.setPlaybackRate(0.5); }catch(e){} }
   } else {
+    /* Thumbnail-birinchi: pleyer iframe qurilguncha (~1-2s) qora ekran o'rniga
+       videoning rasmi ko'rinadi — "bir zumda ochildi" hissi. */
+    var ytEl=document.getElementById(sp.mount.yt);
+    if(ytEl && ytEl.parentNode && ytEl.parentNode.classList.contains('spvid')){
+      ytEl.parentNode.style.background='#000 url(https://i.ytimg.com/vi/'+r.video_id+'/hqdefault.jpg) center/cover no-repeat';
+    }
     sp.player=new YT.Player(sp.mount.yt, {
       videoId:r.video_id,
       playerVars:{ start:start, autoplay:1, rel:0, playsinline:1 },
@@ -2100,6 +2144,9 @@ function start(){
   var sp=document.getElementById('splash');
   if(sp){ sp.classList.add('hide'); setTimeout(function(){ sp.style.display='none'; }, 300); }
   if(S.onboarded){ go('home'); } else { renderOb(); go('ob'); }
+  /* YT IFrame API'ni oldindan isitamiz (ilova tinchigach) — birinchi video ochilishida
+     skript yuklashning ~0.5-1.5s kutishi yo'qoladi. */
+  setTimeout(function(){ ensureYT(function(){}); }, 2500);
 }
 </script>
 </body>
