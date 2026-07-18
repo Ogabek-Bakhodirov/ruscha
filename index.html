@@ -1278,7 +1278,8 @@ window.onYouTubeIframeAPIReady=function(){ ytState="ready"; flushYT(); };
 function flushYT(err){ var q=ytQueue.slice(); ytQueue=[]; q.forEach(function(f){f(err);}); }
 
 /* sp.mount = DOM ID'lar to'plami. Bir vaqtda faqat bitta pleyer faol (search yoki saved). */
-var sp={results:[], q:'', idx:0, player:null, timer:null, cues:[], curCue:-1, slow:false, mount:null, lang:'en'};
+var sp={results:[], q:'', idx:0, player:null, timer:null, cues:[], curCue:-1, slow:false, mount:null, lang:'en',
+        ready:false, pending:null, errSkips:0};   // ready/pending: YT onReady race himoyasi
 function spMountSearch(){ return {key:'search', box:'spBox', yt:'spYT', sub:'spSub', cnt:'spCnt', ad:'spAd', adImg:'spAdImg'}; }
 function spMountSaved(i){ var s='sv'+i; return {key:'saved-'+i, box:s+'Box', yt:s+'YT', sub:s+'Sub', cnt:s+'Cnt', ad:s+'Ad', adImg:s+'AdImg'}; }
 function spMountCat(id){ var s='cat'+id; return {key:'cat-'+id, box:s+'Box', yt:s+'YT', sub:s+'Sub', cnt:s+'Cnt', ad:s+'Ad', adImg:s+'AdImg'}; }
@@ -1385,16 +1386,27 @@ function renderCueText(text, qtoks){
   return h;
 }
 /* Videoga tegishli cue'larni backenddan olamiz (fon'da, natijaga bog'liq emas).
-   Yiqilsa — spLoad'ning fallback matni qoladi. */
-function fetchCuesFor(videoId, cbToken){
+   Kesh: video+til -> cues (sessiya ichida) — oldingi/keyingi orasida qaytganda bir zumda,
+   EF sovuq startida ham transcript qotib qolmaydi. Xato bo'lsa BIR marta qayta urinамiz. */
+var cueCache={};
+function fetchCuesFor(videoId, cbToken, isRetry){
   if(!SERVER) return;
+  var ck=(sp.lang||'en')+'|'+videoId;
+  if(cueCache[ck]){
+    if(sp.__ctok===cbToken){ sp.cues=cueCache[ck]; sp.curCue=-1; }
+    return;
+  }
   /* Pleyer qaysi til uchun ochilgan bo'lsa (sp.lang), o'sha tilning cue'lari:
      en_video_cues yoki ru_video_cues. */
   api((sp.lang||'en')+'_video_cues',{video_id:videoId}).then(function(res){
+    var cues = (res && Array.isArray(res.cues)) ? res.cues : [];
+    if(cues.length) cueCache[ck]=cues;
     if(sp.__ctok!==cbToken) return;   // boshqa videoga o'tib ketgan bo'lsa — e'tibor bermaymiz
-    sp.cues = (res && Array.isArray(res.cues)) ? res.cues : [];
-    sp.curCue=-1;
-  }).catch(function(){});
+    sp.cues=cues; sp.curCue=-1;
+  }).catch(function(){
+    /* Tarmoq/EF xatosi — transcript o'lik qolmasin: 900ms dan keyin bitta retry */
+    if(!isRetry) setTimeout(function(){ if(sp.__ctok===cbToken) fetchCuesFor(videoId, cbToken, true); }, 900);
+  });
 }
 
 /* Har videodan faqat bitta (eng mos) segment — "Keyingi" turli videolarga o'tsin,
@@ -1417,7 +1429,10 @@ function openSeylyPlayer(results, q, mount, lang){
   sp.results=dedupByVideo(results); sp.q=q; sp.slow=false;
   if(mount.key==='search') hideYGSearch();
   renderAd();
+  sp.errSkips=0;
   ensureYT(function(err){
+    /* API yuklanayotganda user boshqa so'z/joyga o'tib ketgan bo'lsa — eski callback jim qoladi */
+    if(sp.mount!==mount) return;
     if(err || !window.YT || !YT.Player){
       /* IFrame API yuklanmasa — search'da YouGlish zaxira. Saved'da hech nima qilmaymiz. */
       hideSeylyPlayer(); if(mount.key==='search') runSearchWidget(q); return;
@@ -1425,6 +1440,45 @@ function openSeylyPlayer(results, q, mount, lang){
     hideSearchLoading();
     document.getElementById(mount.box).style.display='block';
     spLoad(0);
+  });
+}
+/* Pleyer yaratish. MUHIM ikki narsa:
+   1) YT.Player host div'ni iframe bilan almashtiradi, destroy() esa iframe'ni DOMdan
+      butunlay olib tashlaydi — host O'ZI YO'QOLADI. Qayta ochilishda host'ni qayta
+      quramiz, aks holda YT.Player element topolmay exception otadi (pleyer ochilmasdi).
+   2) onReady'gacha loadVideoById chaqiruvi YUTILADI — shu sabab "Keyingi" bosilганda
+      video almashmasdi. ready flag + pending navbat bilan hal qilinadi. */
+function spCreatePlayer(videoId, start){
+  var host=document.getElementById(sp.mount.yt);
+  if(!host){
+    var box=document.getElementById(sp.mount.box);
+    var vid=box ? box.querySelector('.spvid') : null;
+    if(!vid) return;
+    host=document.createElement('div'); host.id=sp.mount.yt; vid.appendChild(host);
+  }
+  /* Thumbnail-birinchi: iframe qurilguncha qora ekran o'rniga video rasmi */
+  if(host.parentNode && host.parentNode.classList.contains('spvid')){
+    host.parentNode.style.background='#000 url(https://i.ytimg.com/vi/'+videoId+'/hqdefault.jpg) center/cover no-repeat';
+  }
+  sp.ready=false; sp.pending=null;
+  sp.player=new YT.Player(sp.mount.yt, {
+    videoId:videoId,
+    playerVars:{ start:start, autoplay:1, rel:0, playsinline:1 },
+    events:{
+      onReady:function(ev){
+        if(sp.player!==ev.target) return;   // eskirgan pleyer eventi
+        sp.ready=true;
+        if(sp.pending){ var p=sp.pending; sp.pending=null; try{ ev.target.loadVideoById(p); }catch(e){} }
+        if(sp.slow){ try{ ev.target.setPlaybackRate(0.5); }catch(e){} }
+      },
+      onError:function(ev){
+        if(sp.player!==ev.target) return;
+        /* Video o'chirilgan/embed'ga yopiq — qora ekranda qotmasdan keyingisiga o'tamiz */
+        sp.errSkips=(sp.errSkips||0)+1;
+        if(sp.results.length>1 && sp.errSkips<sp.results.length){ spLoad(sp.idx+1); }
+        else { var s=sp.mount&&document.getElementById(sp.mount.sub); if(s) s.textContent=t("Video yuklashda xatolik."); }
+      }
+    }
   });
 }
 function spLoad(i){
@@ -1445,20 +1499,17 @@ function spLoad(i){
   sp.__ctok = (sp.__ctok||0)+1;
   fetchCuesFor(r.video_id, sp.__ctok);
 
-  if(sp.player && sp.player.loadVideoById){
-    sp.player.loadVideoById({videoId:r.video_id, startSeconds:start});
-    if(sp.slow){ try{ sp.player.setPlaybackRate(0.5); }catch(e){} }
-  } else {
-    /* Thumbnail-birinchi: pleyer iframe qurilguncha (~1-2s) qora ekran o'rniga
-       videoning rasmi ko'rinadi — "bir zumda ochildi" hissi. */
-    var ytEl=document.getElementById(sp.mount.yt);
-    if(ytEl && ytEl.parentNode && ytEl.parentNode.classList.contains('spvid')){
-      ytEl.parentNode.style.background='#000 url(https://i.ytimg.com/vi/'+r.video_id+'/hqdefault.jpg) center/cover no-repeat';
+  if(sp.player){
+    if(sp.ready && sp.player.loadVideoById){
+      sp.player.loadVideoById({videoId:r.video_id, startSeconds:start});
+      if(sp.slow){ try{ sp.player.setPlaybackRate(0.5); }catch(e){} }
+    } else {
+      /* Pleyer hali onReady bo'lmagan — so'rov navbatga; onReady kelishi bilan bajariladi.
+         (Avval bu holatda chaqiruv jimgina yutilib, "Keyingi" ishlamay qolardi.) */
+      sp.pending={videoId:r.video_id, startSeconds:start};
     }
-    sp.player=new YT.Player(sp.mount.yt, {
-      videoId:r.video_id,
-      playerVars:{ start:start, autoplay:1, rel:0, playsinline:1 },
-    });
+  } else {
+    spCreatePlayer(r.video_id, start);
   }
   if(sp.timer) clearInterval(sp.timer);
   sp.timer=setInterval(spTick, 250);
@@ -1480,8 +1531,8 @@ function spTick(){
   }
 }
 function spCtl(act){
-  if(act==='next'){ spLoad(sp.idx+1); return; }
-  if(act==='prev'){ spLoad(sp.idx-1); return; }
+  if(act==='next'){ sp.errSkips=0; spLoad(sp.idx+1); return; }
+  if(act==='prev'){ sp.errSkips=0; spLoad(sp.idx-1); return; }
   if(act==='slow'){
     sp.slow=!sp.slow;
     try{ sp.player.setPlaybackRate(sp.slow?0.5:1); }catch(e){}
@@ -1498,6 +1549,7 @@ function hideSeylyPlayer(){
      iframe bilan almashtiradi, boshqa element bilan qayta qurish kerak. */
   try{ if(sp.player && sp.player.destroy) sp.player.destroy(); }catch(e){}
   sp.player=null; sp.mount=null; sp.cues=[]; sp.curCue=-1;
+  sp.ready=false; sp.pending=null; sp.errSkips=0;
   adFlush();   // pleyer yopildi — yig'ilgan banner o'lchovini yuboramiz
 }
 function hideYGSearch(){
