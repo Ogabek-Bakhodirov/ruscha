@@ -133,6 +133,13 @@
   .sp-tb{appearance:none;-webkit-appearance:none;border:0;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.18);color:#fff}
   .sp-tb.primary{background:#fff;color:#111}
   .sp-tb.yt{background:#ff0033;color:#fff}
+  .sp-tb:active{transform:scale(.96);opacity:.85}
+  /* Yupqa yuqori yuklanish chizig'i — "Keyingi" bosilganda video almashayotganini bildiradi */
+  .sp-bar{position:absolute;top:0;left:0;right:0;height:3px;z-index:4;overflow:hidden;display:none;background:rgba(255,255,255,.14)}
+  .sp-bar.on{display:block}
+  .sp-bar i{position:absolute;top:0;height:100%;width:38%;left:-38%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2));animation:spbar 1.05s ease-in-out infinite}
+  @keyframes spbar{0%{left:-38%}55%{left:45%}100%{left:100%}}
+  .cbtn:active{transform:scale(.96);opacity:.85}
   .spsub{padding:12px 6px 4px;text-align:center;font-size:15.5px;line-height:1.65;font-weight:600;min-height:52px;transition:opacity .18s}
   .spsub .w{padding:1px 4px;border-radius:6px;color:var(--text)}
   .spsub .w.q{color:var(--text);background:rgba(246,196,69,.26);box-shadow:inset 0 -2px 0 var(--gold);font-weight:800}
@@ -1671,12 +1678,31 @@ function spRenderTap(el){
 }
 function spShowTap(){
   if(!sp.reported){ sp.reported=true; sp.consecFails=(sp.consecFails||0)+1; spReport('no_start'); }
+  spBarHide();   // yuklanish chizig'ini o'chirib, nosozlik qatlamini ko'rsatamiz
   var el=spTapEl(); if(el) el.classList.add('on');
 }
 function spHideTap(){
   if(!sp.mount) return;
   var box=document.getElementById(sp.mount.box);
   var el=box?box.querySelector('.sp-tap'):null;
+  if(el) el.classList.remove('on');
+}
+/* Yupqa yuqori yuklanish chizig'i (video almashish/yuklanish signali) */
+function spBarEl(){
+  if(!sp.mount) return null;
+  var host=document.getElementById(sp.mount.yt);
+  var vid=host && host.parentNode && host.parentNode.classList.contains('spvid') ? host.parentNode : null;
+  if(!vid){ var box=document.getElementById(sp.mount.box); vid=box?box.querySelector('.spvid'):null; }
+  if(!vid) return null;
+  var el=vid.querySelector('.sp-bar');
+  if(!el){ el=document.createElement('div'); el.className='sp-bar'; el.innerHTML='<i></i>'; vid.appendChild(el); }
+  return el;
+}
+function spBarShow(){ var el=spBarEl(); if(el) el.classList.add('on'); }
+function spBarHide(){
+  if(!sp.mount) return;
+  var box=document.getElementById(sp.mount.box);
+  var el=box?box.querySelector('.sp-bar'):null;
   if(el) el.classList.remove('on');
 }
 function spClearWatch(){ if(sp.watchTimer){ clearTimeout(sp.watchTimer); sp.watchTimer=null; } }
@@ -1724,8 +1750,8 @@ function spCreatePlayer(videoId, start){
       },
       onStateChange:function(ev){
         if(sp.player!==ev.target) return;
-        // PLAYING boshlandi — watchdog/qatlamni olib tashlaymiz, ketma-ket nosozlik hisobini nolga qaytaramiz
-        if(ev.data===1){ sp.started=true; sp.consecFails=0; spClearWatch(); spHideTap(); }
+        // PLAYING boshlandi — watchdog/qatlam/chiziqni olib tashlaymiz, ketma-ket nosozlik hisobini nolga
+        if(ev.data===1){ sp.started=true; sp.consecFails=0; spClearWatch(); spHideTap(); spBarHide(); }
       },
       onError:function(ev){
         if(sp.player!==ev.target) return;
@@ -1733,7 +1759,7 @@ function spCreatePlayer(videoId, start){
         spReport('yt_error');
         sp.errSkips=(sp.errSkips||0)+1;
         if(sp.results.length>1 && sp.errSkips<sp.results.length){ spLoad(sp.idx+1); }
-        else { spClearWatch(); spHideTap(); var s=sp.mount&&document.getElementById(sp.mount.sub); if(s) s.textContent=t("Video yuklashda xatolik."); }
+        else { spClearWatch(); spHideTap(); spBarHide(); var s=sp.mount&&document.getElementById(sp.mount.sub); if(s) s.textContent=t("Video yuklashda xatolik."); }
       }
     }
   });
@@ -1751,6 +1777,7 @@ function spLoad(i){
 
   document.getElementById(sp.mount.sub).innerHTML=renderCueText(r.text||'', sp.qtoks);
   document.getElementById(sp.mount.cnt).textContent=(i+1)+' / '+sp.results.length;
+  spBarShow();   // video yuklanmoqda — tepada chiziq (PLAYING'da yoki xatoda yo'qoladi)
 
   sp.cues=[]; sp.curCue=-1;
   sp.__ctok = (sp.__ctok||0)+1;
@@ -1800,6 +1827,7 @@ function spNav(delta){
   sp.navTarget += delta;
   var wrapped=((sp.navTarget % n)+n)%n;
   var cnt=document.getElementById(sp.mount.cnt); if(cnt) cnt.textContent=(wrapped+1)+' / '+n;   // darhol javob (video hali yuklanmaydi)
+  spHideTap(); spBarShow();   // bosilganini bildirish: tepada yuklanish chizig'i (debounce davomida ham)
   if(tg&&tg.HapticFeedback){ try{ tg.HapticFeedback.selectionChanged(); }catch(e){} }
   if(sp.navTimer){ clearTimeout(sp.navTimer); sp.navTimer=null; }
   sp.navTimer=setTimeout(function(){
@@ -1822,7 +1850,7 @@ function hideSeylyPlayer(){
     var b=document.getElementById(sp.mount.box); if(b) b.style.display='none';
   }
   if(sp.timer){ clearInterval(sp.timer); sp.timer=null; }
-  spClearWatch(); spHideTap();   // watchdog va bosib o'ynatish qatlamini tozalaymiz (sp.mount hali bor)
+  spClearWatch(); spHideTap(); spBarHide();   // watchdog, qatlam va yuklanish chizig'ini tozalaymiz (sp.mount hali bor)
   try{ if(sp.player && sp.player.stopVideo) sp.player.stopVideo(); }catch(e){}
   /* Yangi mount'ga o'tishda pleyerni butunlay yo'q qilamiz — YT.Player DOM elementini
      iframe bilan almashtiradi, boshqa element bilan qayta qurish kerak. */
