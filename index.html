@@ -227,18 +227,23 @@
   .sense-syn{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .sense-syn .lbl{font-size:10.5px;color:var(--muted);font-weight:700}
   .syn-chip{font-size:11.5px;color:var(--text);background:var(--card-2);border:1px solid var(--line);border-radius:99px;padding:2px 9px}
-  .ig-save{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
-    border:1.5px solid var(--accent-2);background:var(--card-2);color:var(--accent-2);border-radius:99px;
-    padding:6px 13px 6px 11px;font-size:12.5px;font-weight:800;cursor:pointer;
-    transition:transform .12s ease,background .15s,color .15s,border-color .15s}
-  .ig-save .bm{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;flex:0 0 auto}
-  .ig-save.on{border-color:var(--gold);background:rgba(246,196,69,.14);color:var(--gold)}
-  .ig-save.on .bm{fill:var(--gold);stroke:var(--gold)}
-  .ig-save.tap{animation:svpop .34s ease}
-  @keyframes svpop{0%{transform:scale(1)}35%{transform:scale(1.22)}100%{transform:scale(1)}}
-  .ig-save.pulse{animation:svpulse 1.5s ease 2}
-  @keyframes svpulse{0%,100%{box-shadow:0 0 0 0 rgba(139,91,255,0)}50%{box-shadow:0 0 0 6px rgba(139,91,255,.16)}}
-  @media (prefers-reduced-motion: reduce){ .ig-save.pulse,.ig-save.tap{animation:none} }
+  /* Save = asosiy harakat: ta'rif kartasi tepasida to'liq kenglikda, to'ldirilgan, kontrastli */
+  .save-hero{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;min-height:50px;
+    margin:0 0 12px;border:none;border-radius:14px;cursor:pointer;font-size:15px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 6px 16px rgba(91,140,255,.30);
+    transition:transform .12s ease,box-shadow .2s,background .2s;-webkit-tap-highlight-color:transparent}
+  .save-hero:active{transform:scale(.97)}
+  .save-hero .bm{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;flex:0 0 auto}
+  .save-hero.on{background:linear-gradient(135deg,var(--gold),#e0a000);color:#3a2a00;box-shadow:0 6px 16px rgba(246,196,69,.30)}
+  .save-hero.on .bm{fill:currentColor;stroke:currentColor}
+  .save-hero.tap{animation:svpop .34s ease}
+  @keyframes svpop{0%{transform:scale(1)}35%{transform:scale(1.06)}100%{transform:scale(1)}}
+  .save-hero.coach{animation:svGlow 1.8s ease-in-out infinite}
+  @keyframes svGlow{0%,100%{box-shadow:0 6px 16px rgba(91,140,255,.30)}50%{box-shadow:0 7px 24px rgba(91,140,255,.60)}}
+  .save-coach{display:flex;align-items:center;gap:7px;margin:-4px 0 12px;padding:8px 11px;
+    background:var(--card-2);border:1px dashed var(--accent-2);border-radius:10px;font-size:12px;font-weight:600;color:var(--text)}
+  .save-coach .em{font-size:14px;flex:0 0 auto}
+  @media (prefers-reduced-motion: reduce){ .save-hero.coach,.save-hero.tap{animation:none} }
   .sv-group{margin:16px 0 8px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--text)}
   .sv-group .fl{font-size:18px}
   .sv-group .cnt{font-size:11px;color:var(--muted);font-weight:600}
@@ -2169,11 +2174,13 @@ function renderDefine(d){
   el.className='defcard';
   var key=savedKey(effSearchLang(), d.word||'');
   var on=!!S.saved[key];
-  var h='<div class="def-head"><span class="def-word">'+escHtml(d.word||'')+'</span>'+
+  var coach=(!on && !S.saveCoachDone);   // birinchi marta: ko'rsatma + jimirlash
+  var h='<button class="save-hero'+(on?' on':'')+(coach?' coach':'')+'" id="defSaveBtn" onclick="toggleSaveCur()" aria-label="'+(on?'Saqlangan':'Saqlash')+'">'+
+          saveHeroInner(on)+'</button>'+
+        (coach?'<div class="save-coach" id="saveCoach"><span class="em">👆</span>'+t("Saqlab qo'ying, keyin videoda takrorlaysiz")+'</div>':'')+
+        '<div class="def-head"><span class="def-word">'+escHtml(d.word||'')+'</span>'+
         (d.translit?'<span class="def-tr">['+escHtml(d.translit)+']</span>':'')+
-        (d.pos?'<span class="def-pos">'+escHtml(d.pos)+'</span>':'')+
-        '<button class="ig-save'+(on?' on':' pulse')+'" id="defSaveBtn" onclick="toggleSaveCur()" aria-label="'+(on?'Saqlangan':'Saqlash')+'">'+
-          saveBtnInner(on)+'</button></div>'+
+        (d.pos?'<span class="def-pos">'+escHtml(d.pos)+'</span>':'')+'</div>'+
         '<p class="def-sub">'+t("Ma'nolari")+' '+langInfo(effSearchLang()).flag+'</p>';
   (d.senses||[]).forEach(function(s,i){
     h+='<div class="sense"><span class="sense-uz"><span class="sense-n">'+(i+1)+'</span>'+escHtml(s.uz||'')+'</span>';
@@ -2219,20 +2226,24 @@ function defInnerHtml(d){
 function bookmarkSvg(){
   return '<svg class="bm" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>';
 }
-function saveBtnInner(on){
-  return bookmarkSvg()+'<span class="ig-lbl">'+(on?'Saqlangan':'Saqlash')+'</span>';
+function saveHeroInner(on){
+  return on
+    ? '<svg class="bm" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg><span>'+t('Saqlangan')+'</span>'
+    : bookmarkSvg()+'<span>'+t("So'zni saqlash")+'</span>';
 }
 function toggleSaveCur(){
   if(!curDef || !curDef.word) return;
   var dl=effSearchLang();   // fallback bo'lsa topilgan til (masalan rus rejimida inglizcha so'z)
   toggleSave(curDef.word, dl, curDef);
   var key=savedKey(dl, curDef.word), on=!!S.saved[key];
+  if(!S.saveCoachDone){ S.saveCoachDone=true; save(); }   // ko'rsatma bir marta
+  var c=document.getElementById('saveCoach'); if(c) c.style.display='none';
   var b=document.getElementById('defSaveBtn');
   if(b){
-    b.classList.remove('pulse');
+    b.classList.remove('coach');
     b.classList.toggle('on', on);
     b.setAttribute('aria-label', on?'Saqlangan':'Saqlash');
-    b.innerHTML=saveBtnInner(on);
+    b.innerHTML=saveHeroInner(on);
     b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap');   // bosishda pop
   }
 }
@@ -2244,7 +2255,7 @@ function toggleSave(word, lang, def){
     if(SERVER) api('unsave_word',{q:word, lang:lang}).catch(function(){});
   } else {
     S.saved[key]={ word:def.word||word, translit:def.translit||'', lang:lang, def:def, at:Date.now() };
-    toast(t("🔖 Saqlandi"));
+    toast("🔖 "+t("Saqlandi")+" · "+Object.keys(S.saved).length+" "+t("so'z"));
     if(SERVER) api('save_word',{q:word, lang:lang, def:def}).catch(function(){});
   }
   save();
