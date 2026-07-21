@@ -467,6 +467,29 @@ var API_STG  = "https://ubctutftqgbgcevfziil.supabase.co/functions/v1/api-stg";
 var IS_STG = /[?&]stg=1/.test(location.search) || /-git-[^.]*\.vercel\.app$/.test(location.hostname);
 var API_URL = IS_STG ? API_STG : API_PROD; // backend
 
+/* "Bilasizmi?" karta tugmasi ochganida: ?w=<so'z>&lang=<til> — ilova qidiruv sahifasida
+   shu so'zni avtomatik qidiradi. Ochilishда bir marta o'qiladi. */
+var CARD_Q = (function(){
+  try{
+    var p = new URLSearchParams(location.search);
+    var w = (p.get('w')||'').trim().slice(0,80);
+    if(!w) return null;
+    var lg = (p.get('lang')||'').trim().toLowerCase();
+    return { w:w, lang:(['ru','en','de'].indexOf(lg)>=0 ? lg : null) };
+  }catch(e){ return null; }
+})();
+function runCardSearch(){
+  if(!CARD_Q) return false;
+  var cq = CARD_Q; CARD_Q = null;   // faqat bir marta
+  if(cq.lang && S.langs && S.langs.indexOf(cq.lang)>=0){ S.srchLang = cq.lang; }
+  go('search');
+  var inp = document.getElementById('sInput');
+  if(inp) inp.value = cq.w;
+  renderSearchLangs();
+  try{ doSearch(); }catch(e){}
+  return true;
+}
+
 /* ================== INTERFEYS TILI (i18n) ==================
    Kelajakda oson kengaytirish uchun: barcha interfeys matnlari shu qatlamdan o'tadi.
    Hozircha faqat O'ZBEKCHA tayyor. Boshqa tillar (ru/kz/zh) tarjima lug'ati to'lgach
@@ -899,6 +922,8 @@ function obNext(){
   // Onboarding tabrigi -> yopilgach 3 kunlik Pro sovg'a e'loni (trial bo'lsa).
   if(ob.tasted) celebrateOnboarding(S.proTrial ? showProTrial : null);
   else { toast(t("Xush kelibsiz! Birinchi darsingiz tayyor 🎉")); if(S.proTrial) setTimeout(showProTrial, 700); }
+  // Karta havolasi orqali kelgan bo'lsa — tabrik/e'londan so'ng so'zni avtomatik qidiramiz.
+  if(CARD_Q) setTimeout(function(){ runCardSearch(); }, 1600);
 }
 
 /* ================== HOME ================== */
@@ -2526,7 +2551,7 @@ function start(){
   setProLogo();
   var sp=document.getElementById('splash');
   if(sp){ sp.classList.add('hide'); setTimeout(function(){ sp.style.display='none'; }, 300); }
-  if(S.onboarded){ go('home'); } else { renderOb(); go('ob'); }
+  if(S.onboarded){ if(!runCardSearch()) go('home'); } else { renderOb(); go('ob'); }
   /* YT IFrame API'ni oldindan isitamiz (ilova tinchigach) — birinchi video ochilishida
      skript yuklashning ~0.5-1.5s kutishi yo'qoladi. */
   setTimeout(function(){ ensureYT(function(){}); }, 2500);
