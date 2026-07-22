@@ -1441,6 +1441,13 @@ function corpusHitLang(res, def){ return (res && res.lang && hasCorpus(res.lang)
 /* Sessiya ichidagi qidiruv keshi: bir marta topilgan natija ikkinchi ochilishda
    bir zumda chiqadi (tarmoqqa qayta bormaymiz). Ibora ro'yxati statik — xavfsiz. */
 var corpusCache={};
+/* Limit tugaganда korpus-video sirtида (kategoriya/saqlangan) Pro upsell — YouGlish EMAS.
+   YouGlish faqat "limit bor + so'z bazada yo'q" holatida fallback bo'ladi. */
+function corpusLockInner(){
+  return t("Bugungi bepul limit tugadi 😔")+'<br>'+
+    t("Pro bilan videolar va tarjimalar cheksiz, istalgancha o'rganing 🚀")+
+    '<br><br><button class="btn gold" onclick="logEv(\'pro_popup_click\',\'video_lock\');go(\'pro\')">'+t("⭐ Pro olish")+'</button>';
+}
 function corpusFirstVideo(q, lang, mount, loadId, fallback){
   if(!(hasCorpus(lang) && SERVER)){ fallback(); return; }
   var ck=lang+'|'+String(q).toLowerCase();
@@ -1450,8 +1457,14 @@ function corpusFirstVideo(q, lang, mount, loadId, fallback){
     openSeylyPlayer(c.results, c.matched || q, mount, c.lang);
     return;
   }
-  var load=document.getElementById(loadId); if(load) load.style.display='flex';
+  var load=document.getElementById(loadId);
+  if(load){ load.className='sload'; load.style.display='flex'; load.innerHTML='<span class="spin"></span><span>'+t("Videolar qidirilmoqda…")+'</span>'; }
   api(lang+'_search',{q:q}).then(function(res){
+    if(res && res.error==='limit'){   // limit -> Pro upsell (YouGlish emas)
+      if(load){ load.className='lockmsg'; load.style.display='block'; load.innerHTML=corpusLockInner(); }
+      logEv('pro_popup_show','video_lock');
+      return;
+    }
     if(load) load.style.display='none';
     if(res && res.ok && res.results && res.results.length){
       // Server ko'p so'zli iborani kalit so'z bilan topgan bo'lsa, shu so'zni gold qilamiz
