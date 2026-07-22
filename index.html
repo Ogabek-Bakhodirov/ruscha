@@ -1268,8 +1268,8 @@ function openBody(id){
   var body=document.getElementById('phb-'+id);
   if(!body.dataset.built){
     body.dataset.built='1';
-    body.innerHTML='<div class="translit">'+p.tr+'</div>'+
-      '<div class="row">'+
+    /* Transliteratsiya olib tashlandi (chalg'itardi — havolaga o'xshab ko'rinardi). Talaffuz tugmasi yetarli. */
+    body.innerHTML='<div class="row">'+
         '<button class="sbtn v" onclick="phVideo('+id+')">'+t("▶ Videoni ko'rish")+'</button>'+
         '<button class="sbtn t" onclick="speak(\''+encodeURIComponent(p.ru)+'\',\''+langInfo(p._lang||'ru').tts+'\')">'+t("🔊 Talaffuz")+'</button>'+
       '</div>'+
