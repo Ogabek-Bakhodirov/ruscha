@@ -2494,11 +2494,52 @@ function loadFeedback(){
 }
 
 /* ================== TTS ================== */
+/* Qurilma ovozini (Web Speech) ishlatamiz. Muammo: ko'p Android/WebView'da
+   maqsad tilidagi ovoz umuman o'rnatilmagan bo'ladi — u holda speak() JIMGINA
+   hech narsa qilmaydi ("ovoz eshitilmadi"). Shuning uchun mos ovoz bor-yo'qligini
+   tekshiramiz va yo'q bo'lsa foydalanuvchiga ochiq xabar beramiz. */
+try{
+  if(I18N && I18N.ru){
+    I18N.ru["Qurilmangizda ruscha ovoz o'rnatilmagan"]="На вашем устройстве не установлен русский голос";
+    I18N.ru["Qurilmangizda inglizcha ovoz o'rnatilmagan"]="На вашем устройстве не установлен английский голос";
+    I18N.ru["Qurilmangizda nemischa ovoz o'rnatilmagan"]="На вашем устройстве не установлен немецкий голос";
+  }
+}catch(e){}
+function ttsVoiceFor(lang2){
+  try{
+    var vs=window.speechSynthesis.getVoices()||[];
+    for(var i=0;i<vs.length;i++){
+      var vl=(vs[i].lang||'').toLowerCase().replace('_','-');
+      if(vl.slice(0,2)===lang2) return vs[i];
+    }
+  }catch(e){}
+  return null;
+}
+function ttsNoVoiceMsg(lang2){
+  var nm={ru:"ruscha", en:"inglizcha", de:"nemischa"}[lang2]||"";
+  return t("Qurilmangizda "+nm+" ovoz o'rnatilmagan");
+}
 function speak(enc, tts){
-  if(!('speechSynthesis' in window)) return;
-  var u=new SpeechSynthesisUtterance(decodeURIComponent(enc));
-  u.lang=tts||'ru-RU'; u.rate=.9;
-  window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+  var lang=tts||'ru-RU';
+  var lang2=lang.slice(0,2).toLowerCase();
+  if(!('speechSynthesis' in window)){ toast(ttsNoVoiceMsg(lang2)); return; }
+  function go(){
+    var v=ttsVoiceFor(lang2);
+    if(!v){ toast(ttsNoVoiceMsg(lang2)); return; }
+    var u=new SpeechSynthesisUtterance(decodeURIComponent(enc));
+    u.lang=lang; u.rate=.9; u.voice=v;
+    /* 'interrupted'/'canceled' — foydalanuvchi boshqa so'z bosgani, xato emas */
+    u.onerror=function(ev){ var er=ev&&ev.error; if(er==='interrupted'||er==='canceled') return; toast(ttsNoVoiceMsg(lang2)); };
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    try{ window.speechSynthesis.speak(u); }catch(e){ toast(ttsNoVoiceMsg(lang2)); }
+  }
+  var vs=[]; try{ vs=window.speechSynthesis.getVoices()||[]; }catch(e){}
+  if(vs.length){ go(); return; }
+  /* Ovozlar hali yuklanmagan — bir marta 'onvoiceschanged' ni kutamiz, aks holda ~700ms dan keyin baribir urinamiz */
+  var done=false;
+  function fire(){ if(done) return; done=true; go(); }
+  try{ window.speechSynthesis.onvoiceschanged=fire; }catch(e){}
+  setTimeout(fire, 700);
 }
 
 /* ================== ISHGA TUSHIRISH ================== */
