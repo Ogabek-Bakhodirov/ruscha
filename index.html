@@ -400,7 +400,7 @@
   <div class="defcard" id="sDefine" style="display:none"></div>
   <div class="lockmsg" id="sLock" style="display:none">
     <span data-i18n="Bugungi bepul qidiruvlar tugadi 😔">Bugungi bepul qidiruvlar tugadi 😔</span><br><br>
-    <button class="btn gold" onclick="go('pro')" data-i18n="⭐ Pro — cheksiz qidiruv">⭐ Pro — cheksiz qidiruv</button>
+    <button class="btn gold" onclick="logEv('pro_popup_click','search_lock');go('pro')" data-i18n="⭐ Pro — cheksiz qidiruv">⭐ Pro — cheksiz qidiruv</button>
   </div>
 </div>
 
@@ -480,12 +480,14 @@ var CARD_Q = (function(){
     var w = (p.get('w')||'').trim().slice(0,80);
     if(!w) return null;
     var lg = (p.get('lang')||'').trim().toLowerCase();
-    return { w:w, lang:(['ru','en','de'].indexOf(lg)>=0 ? lg : null) };
+    var cid = (p.get('cid')||'').trim().slice(0,20);
+    return { w:w, lang:(['ru','en','de'].indexOf(lg)>=0 ? lg : null), cid:(/^\d+$/.test(cid)?cid:null) };
   }catch(e){ return null; }
 })();
 function runCardSearch(){
   if(!CARD_Q) return false;
   var cq = CARD_Q; CARD_Q = null;   // faqat bir marta
+  if(cq.cid) logEv('card_open', cq.cid);   // karta CTR (ADR-002): qaysi karta ilova ochtirdi
   if(cq.lang && S.langs && S.langs.indexOf(cq.lang)>=0){ S.srchLang = cq.lang; }
   go('search');
   var inp = document.getElementById('sInput');
@@ -587,6 +589,11 @@ function api(action, extra){
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   }).then(function(r){ return r.json(); });
+}
+/* Ichki analitika (ADR-002): fire-and-forget, UX'ga ta'sir qilmaydi. Guest rejimda yozilmaydi. */
+function logEv(type, ref){
+  if(!SERVER) return;
+  try{ api('log_event',{type:type, ref:ref||null}).catch(function(){}); }catch(e){}
 }
 
 /* ================== HOLAT (localStorage) ================== */
@@ -1084,8 +1091,9 @@ function showLock(id){
   }
   msg += '<br>' + t("Ertaga limitingiz yangilanadi — yoki Pro bilan bugun cheksiz davom eting 🚀");
   body.innerHTML='<div class="lockmsg">'+msg+'<br><br>'+
-    '<button class="btn gold" onclick="go(\'pro\')">'+t("⭐ Pro — cheksiz o'rganish")+'</button></div>';
+    '<button class="btn gold" onclick="logEv(\'pro_popup_click\',\'daily_lock\');go(\'pro\')">'+t("⭐ Pro — cheksiz o'rganish")+'</button></div>';
   document.getElementById('phi-'+id).classList.add('open');
+  logEv('pro_popup_show','daily_lock');
 }
 function celebrateGoal(prevNew){
   var g=goal();
@@ -1531,8 +1539,9 @@ function closeCwPop(){
   try{ if(sp.player && sp.player.playVideo) sp.player.playVideo(); }catch(e){}
 }
 function cwProLockHtml(){
+  logEv('pro_popup_show','define_lock');   // faqat lock render bo'lganda chaqiriladi
   return '<div class="cw-lock">'+t("Bugungi bepul tarjimalar tugadi 😔 Pro bilan istalgancha — har so'zning o'zbekcha ma'nosini bir bosishda ko'ring.")+
-    '<button class="btn gold" onclick="closeCwPop();go(\'pro\')">'+t("⭐ Pro — cheksiz o'rganish")+'</button></div>';
+    '<button class="btn gold" onclick="logEv(\'pro_popup_click\',\'define_lock\');closeCwPop();go(\'pro\')">'+t("⭐ Pro — cheksiz o'rganish")+'</button></div>';
 }
 function cueTap(el){
   if(!SERVER) return;                       // ma'no faqat server rejimida
@@ -2047,9 +2056,13 @@ function logVideo(phraseId, d){
 }
 
 /* ================== QIDIRUV ================== */
+var _sLockWas=false;
 function renderSearchMeta(){
   document.getElementById('sCount').textContent = S.pro ? (S.sCount+"/∞") : (S.sCount+"/"+FREE_SEARCH);
-  document.getElementById('sLock').style.display = (!S.pro && S.sCount>=FREE_SEARCH) ? 'block':'none';
+  var sLockNow = (!S.pro && S.sCount>=FREE_SEARCH);
+  document.getElementById('sLock').style.display = sLockNow ? 'block':'none';
+  if(sLockNow && !_sLockWas) logEv('pro_popup_show','search_lock');   // faqat yashirin->ko'rinish o'tishida
+  _sLockWas = sLockNow;
   var inp=document.getElementById('sInput');
   if(inp){
     var sl=curSearchLang();
