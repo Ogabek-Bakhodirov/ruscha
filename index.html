@@ -1714,11 +1714,12 @@ function renderCueWord(d, lang){
   var wd=document.getElementById('cwPopWord'); if(wd && d.word) wd.textContent=d.word;
   var h='';
   (d.senses||[]).slice(0,3).forEach(function(s){
-    h+='<div class="cw-sense"><div class="cw-uz">'+escHtml(s.uz||'')+'</div>';
-    if(s.note) h+='<div class="cw-note">'+escHtml(s.note)+'</div>';
-    if(s.example && (s.example.t||s.example.u)){
+    h+='<div class="cw-sense"><div class="cw-uz">'+escHtml(senseTxt(s))+'</div>';
+    var nt=senseNote(s); if(nt) h+='<div class="cw-note">'+escHtml(nt)+'</div>';
+    if(s.example && (s.example.t||s.example.u||s.example.r)){
+      var tr=exTrans(s.example);
       h+='<div class="cw-ex">'+(s.example.t?'<div>“'+escHtml(s.example.t)+'”</div>':'')+
-         (s.example.u?'<div class="u">'+escHtml(s.example.u)+'</div>':'')+'</div>';
+         (tr?'<div class="u">'+escHtml(tr)+'</div>':'')+'</div>';
     }
     h+='</div>';
   });
@@ -2320,51 +2321,29 @@ function loadDefine(q){
   }).catch(function(){ defBusy=false; el.style.display='none'; });
 }
 var curDef=null;   // oxirgi ko'rsatilgan ma'no (saqlash uchun)
-function renderDefine(d){
-  var el=document.getElementById('sDefine'); if(!el) return;
-  curDef=d;
-  el.className='defcard';
-  var key=savedKey(effSearchLang(), d.word||'');
-  var on=!!S.saved[key];
-  var coach=(!on && !S.saveCoachDone);   // birinchi marta: ko'rsatma + jimirlash
-  var h='<button class="save-hero'+(on?' on':'')+(coach?' coach':'')+'" id="defSaveBtn" onclick="toggleSaveCur()" aria-label="'+(on?'Saqlangan':'Saqlash')+'">'+
-          saveHeroInner(on)+'</button>'+
-        (coach?'<div class="save-coach" id="saveCoach"><span class="em">👆</span>'+t("Saqlab qo'ying, keyin videoda takrorlaysiz")+'</div>':'')+
-        '<div class="def-head"><span class="def-word">'+escHtml(d.word||'')+'</span>'+
-        (d.translit?'<span class="def-tr">['+escHtml(d.translit)+']</span>':'')+
-        (d.pos?'<span class="def-pos">'+escHtml(d.pos)+'</span>':'')+'</div>'+
-        '<p class="def-sub">'+t("Ma'nolari")+' '+langInfo(effSearchLang()).flag+'</p>';
-  (d.senses||[]).forEach(function(s,i){
-    h+='<div class="sense"><span class="sense-uz"><span class="sense-n">'+(i+1)+'</span>'+escHtml(s.uz||'')+'</span>';
-    if(s.note) h+='<div class="sense-note">'+escHtml(s.note)+'</div>';
-    if(s.example && (s.example.t||s.example.u)){
-      h+='<div class="sense-ex">'+
-         (s.example.t?'<div class="ex-t">“'+escHtml(s.example.t)+'”</div>':'')+
-         (s.example.u?'<div class="ex-u">'+escHtml(s.example.u)+'</div>':'')+'</div>';
-    }
-    if(s.syn && s.syn.length){
-      h+='<div class="sense-syn"><span class="lbl">'+t("Sinonim:")+'</span>';
-      s.syn.slice(0,5).forEach(function(w){ h+='<span class="syn-chip">'+escHtml(w)+'</span>'; });
-      h+='</div>';
-    }
-    h+='</div>';
-  });
-  el.innerHTML=h;
-  el.style.display='block';
+/* ===== Lug'at matnini interfeys tiliga moslash =====
+   v2 ikki tilli format: senses[].ru/note_ru, example.r, pos_ru.
+   Eski (faqat uz) javoblarda ru maydonlari yo'q — har doim uz'ga fallback,
+   user hech qachon bo'sh matn ko'rmaydi. */
+function defL(){ return S.uiLang==='ru' ? 'ru' : 'uz'; }
+function senseTxt(s){ return (defL()==='ru' && s.ru) ? s.ru : (s.uz||''); }
+function senseNote(s){ return (defL()==='ru' && s.note_ru) ? s.note_ru : (s.note||''); }
+function exTrans(ex){
+  var v=(defL()==='ru' && ex.r) ? ex.r : (ex.u||'');
+  return (v===ex.t) ? '' : v;   // rus so'zida tarjima misolning o'zi bo'lsa takrorlamaymiz
 }
-
-/* ================== SAQLANGAN SO'ZLAR ================== */
-function savedKey(lang, word){ return lang+':'+String(word||'').trim().toLowerCase(); }
-function defInnerHtml(d){
-  /* faqat ma'nolar (sarlavhasiz) — saqlangan sahifada ochilganda */
+function posTxt(d){ return (defL()==='ru' && d.pos_ru) ? d.pos_ru : (d.pos||''); }
+/* Ma'nolar ro'yxati HTML — BITTA yadro (qidiruv kartasi + saqlangan sahifa, DRY) */
+function sensesHtml(d){
   var h='';
   (d.senses||[]).forEach(function(s,i){
-    h+='<div class="sense"><span class="sense-uz"><span class="sense-n">'+(i+1)+'</span>'+escHtml(s.uz||'')+'</span>';
-    if(s.note) h+='<div class="sense-note">'+escHtml(s.note)+'</div>';
-    if(s.example && (s.example.t||s.example.u)){
+    h+='<div class="sense"><span class="sense-uz"><span class="sense-n">'+(i+1)+'</span>'+escHtml(senseTxt(s))+'</span>';
+    var nt=senseNote(s); if(nt) h+='<div class="sense-note">'+escHtml(nt)+'</div>';
+    if(s.example && (s.example.t||s.example.u||s.example.r)){
+      var tr=exTrans(s.example);
       h+='<div class="sense-ex">'+
          (s.example.t?'<div class="ex-t">“'+escHtml(s.example.t)+'”</div>':'')+
-         (s.example.u?'<div class="ex-u">'+escHtml(s.example.u)+'</div>':'')+'</div>';
+         (tr?'<div class="ex-u">'+escHtml(tr)+'</div>':'')+'</div>';
     }
     if(s.syn && s.syn.length){
       h+='<div class="sense-syn"><span class="lbl">'+t("Sinonim:")+'</span>';
@@ -2374,6 +2353,32 @@ function defInnerHtml(d){
     h+='</div>';
   });
   return h;
+}
+function renderDefine(d){
+  var el=document.getElementById('sDefine'); if(!el) return;
+  curDef=d;
+  el.className='defcard';
+  var key=savedKey(effSearchLang(), d.word||'');
+  var on=!!S.saved[key];
+  var pos=posTxt(d);
+  var coach=(!on && !S.saveCoachDone);   // birinchi marta: ko'rsatma + jimirlash
+  var h='<button class="save-hero'+(on?' on':'')+(coach?' coach':'')+'" id="defSaveBtn" onclick="toggleSaveCur()" aria-label="'+(on?'Saqlangan':'Saqlash')+'">'+
+          saveHeroInner(on)+'</button>'+
+        (coach?'<div class="save-coach" id="saveCoach"><span class="em">👆</span>'+t("Saqlab qo'ying, keyin videoda takrorlaysiz")+'</div>':'')+
+        '<div class="def-head"><span class="def-word">'+escHtml(d.word||'')+'</span>'+
+        (d.translit?'<span class="def-tr">['+escHtml(d.translit)+']</span>':'')+
+        (pos?'<span class="def-pos">'+escHtml(pos)+'</span>':'')+'</div>'+
+        '<p class="def-sub">'+t("Ma'nolari")+' '+langInfo(effSearchLang()).flag+'</p>'+
+        sensesHtml(d);
+  el.innerHTML=h;
+  el.style.display='block';
+}
+
+/* ================== SAQLANGAN SO'ZLAR ================== */
+function savedKey(lang, word){ return lang+':'+String(word||'').trim().toLowerCase(); }
+function defInnerHtml(d){
+  /* faqat ma'nolar (sarlavhasiz) — saqlangan sahifada ochilganda */
+  return sensesHtml(d);
 }
 function bookmarkSvg(){
   return '<svg class="bm" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>';
