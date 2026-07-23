@@ -321,6 +321,7 @@
   .pf-stats{display:flex;gap:10px;margin-bottom:12px}
   .pf-stat{flex:1;padding:14px 6px;text-align:center;margin-bottom:0}
   .pf-n{font-size:22px;font-weight:800;color:var(--text);line-height:1}
+  .pf-soon{font-size:13px;font-weight:600;color:var(--muted);line-height:1.5}
   .pf-l{font-size:11px;color:var(--muted);margin-top:5px}
   .pf-pro{border-radius:18px;padding:16px 15px;margin-bottom:14px;background:linear-gradient(135deg,rgba(246,196,69,.2),rgba(224,160,0,.06));border:1px solid rgba(246,196,69,.35)}
   .pf-pro-t{display:flex;align-items:center;gap:10px;margin-bottom:6px}
@@ -462,9 +463,9 @@
 
   <!-- Statistika: 3 ta real ko'rsatkich -->
   <div class="pf-stats">
-    <div class="card pf-stat"><div class="pf-n" id="pfLearned">0</div><div class="pf-l" data-i18n="O'rganilgan so'z">O'rganilgan so'z</div></div>
-    <div class="card pf-stat"><div class="pf-n" id="pfStreakN">0</div><div class="pf-l" data-i18n="Joriy seriya">Joriy seriya</div></div>
-    <div class="card pf-stat"><div class="pf-n" id="pfSaved">0</div><div class="pf-l" data-i18n="Saqlangan">Saqlangan</div></div>
+    <div class="card pf-stat"><div class="pf-n pf-soon" data-i18n="tez kunda">tez kunda</div><div class="pf-l" data-i18n="O'rganilgan so'z">O'rganilgan so'z</div></div>
+    <div class="card pf-stat"><div class="pf-n pf-soon" data-i18n="tez kunda">tez kunda</div><div class="pf-l" data-i18n="Haftalik ball">Haftalik ball</div></div>
+    <div class="card pf-stat"><div class="pf-n pf-soon" data-i18n="tez kunda">tez kunda</div><div class="pf-l" data-i18n="Eng uzun seriya">Eng uzun seriya</div></div>
   </div>
 
   <!-- Pro karta (dinamik — mavjud logikaga ulangan) -->
@@ -2556,9 +2557,6 @@ function renderProfile(){
   var nm=document.getElementById('pfName'); if(nm) nm.textContent=name;
   var av=document.getElementById('pfAvatar'); if(av) av.textContent=(name&&name.trim()?name.trim().charAt(0):'S');
   var stEl=document.getElementById('pfStreak'); if(stEl) stEl.textContent=t('🔥 {d} kunlik seriya',{d:(S.streak||0)});
-  var lc=document.getElementById('pfLearned'); if(lc) lc.textContent=learnedCount();
-  var sn=document.getElementById('pfStreakN'); if(sn) sn.textContent=(S.streak||0);
-  var sv=document.getElementById('pfSaved'); if(sv) sv.textContent=Object.keys(S.saved||{}).length;
   var langs=(S.langs&&S.langs.length)?S.langs:['ru'];
   var lg=document.getElementById('pfLangs'); if(lg) lg.textContent=langs.map(function(c){ return langInfo(c).flag; }).join(' ');
   var lv=document.getElementById('pfLevels');
@@ -2819,6 +2817,14 @@ try{
     I18N.ru["Qurilmangizda ruscha ovoz o'rnatilmagan"]="На вашем устройстве не установлен русский голос";
     I18N.ru["Qurilmangizda inglizcha ovoz o'rnatilmagan"]="На вашем устройстве не установлен английский голос";
     I18N.ru["Qurilmangizda nemischa ovoz o'rnatilmagan"]="На вашем устройстве не установлен немецкий голос";
+    I18N.ru["Haftalik ball"]="Недельные очки";
+    I18N.ru["Eng uzun seriya"]="Самая длинная серия";
+    I18N.ru["tez kunda"]="скоро";
+  }
+  if(I18N && I18N.kz){
+    I18N.kz["Haftalik ball"]="Апталық ұпай";
+    I18N.kz["Eng uzun seriya"]="Ең ұзын серия";
+    I18N.kz["tez kunda"]="жақында";
   }
 }catch(e){}
 function ttsVoiceFor(lang2){
