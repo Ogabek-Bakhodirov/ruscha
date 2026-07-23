@@ -122,6 +122,25 @@
         <button class="rbtn" data-a="us" onclick="upAccent('us')">🇺🇸 US</button>
         <button class="rbtn" data-a="uk" onclick="upAccent('uk')">🇬🇧 UK</button>
       </div>
+      <div class="acc" style="flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:13px;color:var(--muted)">Daraja:</span>
+        <button class="rbtn on" data-d="" onclick="upDegree('')">—</button>
+        <button class="rbtn" data-d="a1" onclick="upDegree('a1')">A1</button>
+        <button class="rbtn" data-d="a2" onclick="upDegree('a2')">A2</button>
+        <button class="rbtn" data-d="b1" onclick="upDegree('b1')">B1</button>
+        <button class="rbtn" data-d="b2" onclick="upDegree('b2')">B2</button>
+        <button class="rbtn" data-d="c1" onclick="upDegree('c1')">C1</button>
+        <button class="rbtn" data-d="c2" onclick="upDegree('c2')">C2</button>
+      </div>
+      <div class="acc" style="flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--muted)">Tur:</span>
+        <button class="rbtn on" data-ct="" onclick="upCt('')">—</button>
+        <button class="rbtn" data-ct="movie" onclick="upCt('movie')">Movie</button>
+        <button class="rbtn" data-ct="podcast" onclick="upCt('podcast')">Podcast</button>
+        <button class="rbtn" data-ct="music" onclick="upCt('music')">Music</button>
+        <button class="rbtn" data-ct="interview" onclick="upCt('interview')">Interview</button>
+        <input id="upCtNew" placeholder="+ yangi tur" oninput="upCtInput(this.value)" style="flex:1;min-width:90px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12.5px;outline:none">
+      </div>
       <button class="btn primary" style="margin-top:12px" id="upBtn" onclick="doUpload()">Yuborish</button>
       <div id="upOut" style="display:none;margin-top:12px"></div>
     </div>
@@ -265,6 +284,17 @@ function closeSheet(e,f){ if(f||e.target===document.getElementById('sheet')) doc
 function upAccent(a){ st.upAccent=a;
   document.querySelectorAll('#tab-up .rbtn[data-a]').forEach(function(b){ b.classList.toggle('on', b.dataset.a===a); });
 }
+/* Daraja (degree) va Tur (content_type) — butun batchga (barcha linklarga) qo'llanadi. */
+function upDegree(d){ st.upDegree=d;
+  document.querySelectorAll('#tab-up .rbtn[data-d]').forEach(function(b){ b.classList.toggle('on', b.dataset.d===d); });
+}
+function upCt(c){ st.upCt=c; var ni=document.getElementById('upCtNew'); if(ni) ni.value='';
+  document.querySelectorAll('#tab-up .rbtn[data-ct]').forEach(function(b){ b.classList.toggle('on', b.dataset.ct===c); });
+}
+/* Yangi tur yozilsa — preset tugmalar bo'shatiladi, o'sha matn ishlatiladi. */
+function upCtInput(v){ st.upCt=(v||'').trim().toLowerCase();
+  document.querySelectorAll('#tab-up .rbtn[data-ct]').forEach(function(b){ b.classList.remove('on'); });
+}
 /* Til tanlash: accent (Talaffuz) faqat ingliz uchun ko'rinadi (rus/nemisda accent yo'q). */
 function upLang(l){ st.upLang=l;
   document.querySelectorAll('#tab-up .rbtn[data-l]').forEach(function(b){ b.classList.toggle('on', b.dataset.l===l); });
@@ -278,7 +308,7 @@ function doUpload(){
   var lang=st.upLang||'en';
   var btn=document.getElementById('upBtn'); btn.disabled=true; btn.textContent='Yuborilmoqda…';
   var out=document.getElementById('upOut'); out.style.display='none';
-  apiAdmin('admin_ingest',{videos:vids, lang:lang, accent:(lang==='en'?(st.upAccent||undefined):undefined)}).then(function(res){
+  apiAdmin('admin_ingest',{videos:vids, lang:lang, accent:(lang==='en'?(st.upAccent||undefined):undefined), degree:(st.upDegree||undefined), content_type:(st.upCt||undefined)}).then(function(res){
     btn.disabled=false; btn.textContent='Yuborish';
     if(res.status===401){ logout(); return; }
     var j=res.j||{};
