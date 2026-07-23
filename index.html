@@ -487,7 +487,7 @@
   <div class="pf-stats">
     <div class="card pf-stat"><div class="pf-n pf-soon" data-i18n="tez kunda">tez kunda</div><div class="pf-l" data-i18n="O'rganilgan so'z">O'rganilgan so'z</div></div>
     <div class="card pf-stat"><div class="pf-n pf-soon" data-i18n="tez kunda">tez kunda</div><div class="pf-l" data-i18n="Haftalik ball">Haftalik ball</div></div>
-    <div class="card pf-stat"><div class="pf-n pf-soon" data-i18n="tez kunda">tez kunda</div><div class="pf-l" data-i18n="Eng uzun seriya">Eng uzun seriya</div></div>
+    <div class="card pf-stat"><div class="pf-n" id="pfBest">—</div><div class="pf-l" data-i18n="Eng uzun seriya">Eng uzun seriya</div></div>
   </div>
 
   <!-- Pro karta (dinamik — mavjud logikaga ulangan) -->
@@ -719,7 +719,7 @@ function logEv(type, ref){
 var DEF = { onboarded:false, uiLang:'uz', level:null, levels:{}, goal:null, interests:[], daily:10, pro:false, proUntil:null, proTrial:false, trialUntil:null,
             firstName:'', lastName:'', phone:'', age:null, gender:null, region:'',
             langs:['ru'], curLang:'ru', srchLang:null, accent:null, saved:{},
-            learned:{}, day:"", todayNew:0, sDay:"", sCount:0, streak:0, lastDay:"", freezes:0 };
+            learned:{}, day:"", todayNew:0, sDay:"", sCount:0, streak:0, bestStreak:0, lastDay:"", freezes:0 };
 var S;
 try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem('ru_state')||'{}')); }
 catch(e){ S = Object.assign({}, DEF); }
@@ -2600,6 +2600,7 @@ function renderProfile(){
   var nm=document.getElementById('pfName'); if(nm) nm.textContent=name;
   var av=document.getElementById('pfAvatar'); if(av) av.textContent=(name&&name.trim()?name.trim().charAt(0):'S');
   var stEl=document.getElementById('pfStreak'); if(stEl) stEl.textContent=t('🔥 {d} kunlik seriya',{d:(S.streak||0)});
+  var bsEl=document.getElementById('pfBest'); if(bsEl){ bsEl.classList.remove('pf-soon'); bsEl.textContent=String(S.bestStreak||0); }
   var langs=(S.langs&&S.langs.length)?S.langs:['ru'];
   var lg=document.getElementById('pfLangs'); if(lg) lg.textContent=langs.map(function(c){ return langInfo(c).flag; }).join(' ');
   var lv=document.getElementById('pfLevels');
@@ -3048,6 +3049,7 @@ function boot(d){
       S.pro=!!res.user.pro; S.proUntil=res.user.pro_until||null;
       S.proTrial=!!res.user.pro_trial; S.trialUntil=res.user.trial_until||null;   // 3 kunlik sovg'a (hisoblangan Pro)
       S.streak=res.user.streak||0;
+      S.bestStreak=Math.max(res.user.best_streak||0, S.streak||0);   // eng uzun seriya (server + joriy'dan katta)
       S.freezes=(typeof res.user.freezes==='number')?res.user.freezes:0;
       S.learned={};
       (res.learned||[]).forEach(function(pid){ S.learned[pid]=1; });
