@@ -683,10 +683,6 @@ function setLogo(){
   // PNG ishlatamiz; agar repoda topilmasa -> SVG zaxira
   el.innerHTML = '<img src="'+src+'" alt="Seyly" onerror="this.parentNode.innerHTML=seylyIcon('+(!!S.pro)+')">';
 }
-function setProLogo(){
-  var el=document.getElementById('proHeroLogo'); if(!el) return;
-  el.innerHTML = '<img src="seyly-pro.png" alt="Seyly PRO" onerror="this.parentNode.innerHTML=seylyIcon(true)">';
-}
 /* Favicon (standart logo) */
 (function(){
   try{
@@ -3075,7 +3071,6 @@ var _started=false;
 function start(){
   if(_started) return; _started=true;   // ikki marta chaqirilmasin
   applyI18n();   // statik interfeys matnlarini joriy tilga moslash
-  setProLogo();
   var sp=document.getElementById('splash');
   if(sp){ sp.classList.add('hide'); setTimeout(function(){ sp.style.display='none'; }, 300); }
   if(S.onboarded){ if(!runCardSearch()) go('home'); } else { renderOb(); go('ob'); }
