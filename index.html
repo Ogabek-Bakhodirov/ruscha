@@ -144,6 +144,9 @@
   .spsub .w{padding:1px 4px;border-radius:6px;color:var(--text)}
   .spsub .w.q{color:var(--text);background:rgba(246,196,69,.26);box-shadow:inset 0 -2px 0 var(--gold);font-weight:800}
   .spcnt{text-align:center;color:var(--muted);font-size:11.5px;margin:2px 0 8px}
+  /* Owner moderatsiya tugmasi (faqat egaga ko'rinadi) */
+  .sp-mod{margin-left:10px;border:1px solid rgba(229,100,110,.5);background:rgba(229,100,110,.10);color:#E5646E;font-family:inherit;font-size:11px;font-weight:700;border-radius:8px;padding:3px 9px;cursor:pointer;vertical-align:middle}
+  .sp-mod.rej{border-color:var(--line);background:var(--card-2);color:var(--muted)}
   .spad{display:block;margin:6px 0 8px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card-2)}
   .spad img{display:block;width:100%;height:auto;min-height:120px;object-fit:cover}
   .sload{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:10px;color:var(--muted);font-size:13px;font-weight:600}
@@ -2014,6 +2017,34 @@ function spCreatePlayer(videoId, start){
     }
   });
 }
+/* Pleyer hisobi + FAQAT owner uchun moderatsiya tugmasi.
+   Verdict videoning (sp.lang, sp.q so'zi) juftligiga biriktiriladi — global statusга tegmaydi. */
+function spRenderCnt(){
+  if(!sp.mount) return;
+  var el=document.getElementById(sp.mount.cnt); if(!el) return;
+  var r=sp.results[sp.idx]||{};
+  var base=(sp.idx+1)+' / '+sp.results.length;
+  if(!IS_OWNER){ el.textContent=base; return; }
+  var rej=(r.verdict===-1);
+  el.innerHTML='<span style="vertical-align:middle">'+base+'</span>'+
+    '<button class="sp-mod'+(rej?' rej':'')+'" onclick="spModVerdict()">'+
+    (rej?"🚫 Rad etilgan — tiklash":"❌ Bu so'zga mos emas")+'</button>';
+}
+function spModVerdict(){
+  if(!IS_OWNER) return;
+  var r=sp.results[sp.idx]; if(!r || !r.video_id) return;
+  var word=sp.q, lang=sp.lang||'ru', vid=r.video_id;
+  if(r.verdict===-1){                 // tiklash
+    r.verdict=0; spRenderCnt();
+    api('video_verdict',{lang:lang, word:word, video_id:vid, verdict:0}).catch(function(){});
+    toast(t('Tiklandi'));
+  } else {                            // rad etish + keyingiga o'tish (tez moderatsiya)
+    r.verdict=-1;
+    api('video_verdict',{lang:lang, word:word, video_id:vid, verdict:-1}).catch(function(){});
+    if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('medium')}catch(e){}}
+    if(sp.results.length>1){ spCtl('next'); } else { spRenderCnt(); toast(t('Rad etildi')); }
+  }
+}
 function spLoad(i){
   if(!sp.results.length || !sp.mount) return;
   if(i<0) i=sp.results.length-1;
@@ -2026,7 +2057,7 @@ function spLoad(i){
   String(sp.q||'').split(/\s+/).forEach(function(w){ var n=normTok(w); if(n) sp.qtoks.push(n); });
 
   document.getElementById(sp.mount.sub).innerHTML=renderCueText(r.text||'', sp.qtoks);
-  document.getElementById(sp.mount.cnt).textContent=(i+1)+' / '+sp.results.length;
+  spRenderCnt();   // hisob + (owner bo'lsa) moderatsiya tugmasi
   spBarShow();   // video yuklanmoqda — tepada chiziq (PLAYING'da yoki xatoda yo'qoladi)
 
   sp.cues=[]; sp.curCue=-1;
@@ -2984,6 +3015,8 @@ try{
     I18N.ru["Saqlash"]="Сохранить";
     I18N.ru["Saqlandi"]="Сохранено";
     I18N.ru["Saqlashda xatolik"]="Ошибка при сохранении";
+    I18N.ru["Rad etildi"]="Отклонено";
+    I18N.ru["Tiklandi"]="Восстановлено";
   }
   if(I18N && I18N.kz){
     I18N.kz["Haftalik ball"]="Апталық ұпай";
