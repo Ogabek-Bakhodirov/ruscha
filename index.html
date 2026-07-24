@@ -147,6 +147,10 @@
   /* Owner moderatsiya tugmasi (faqat egaga ko'rinadi) */
   .sp-mod{margin-left:10px;border:1px solid rgba(229,100,110,.5);background:rgba(229,100,110,.10);color:#E5646E;font-family:inherit;font-size:11px;font-weight:700;border-radius:8px;padding:3px 9px;cursor:pointer;vertical-align:middle}
   .sp-mod.rej{border-color:var(--line);background:var(--card-2);color:var(--muted)}
+  /* Oddiy user uchun ko'zga tashlanmaydigan ogohlantirish tugmasi */
+  .sp-report{display:inline-block;margin-top:5px;border:none;background:none;cursor:pointer;font-family:inherit;font-size:11px;color:var(--muted);opacity:.65;padding:2px 4px;text-decoration:underline;text-underline-offset:2px}
+  .sp-report:active{opacity:1}
+  .sp-report.done{color:var(--accent-2);opacity:.9;text-decoration:none;cursor:default}
   .spad{display:block;margin:6px 0 8px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card-2)}
   .spad img{display:block;width:100%;height:auto;min-height:120px;object-fit:cover}
   .sload{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:10px;color:var(--muted);font-size:13px;font-weight:600}
@@ -2024,11 +2028,25 @@ function spRenderCnt(){
   var el=document.getElementById(sp.mount.cnt); if(!el) return;
   var r=sp.results[sp.idx]||{};
   var base=(sp.idx+1)+' / '+sp.results.length;
-  if(!IS_OWNER){ el.textContent=base; return; }
-  var rej=(r.verdict===-1);
-  el.innerHTML='<span style="vertical-align:middle">'+base+'</span>'+
-    '<button class="sp-mod'+(rej?' rej':'')+'" onclick="spModVerdict()">'+
-    (rej?"🚫 Rad etilgan — tiklash":"❌ Bu so'zga mos emas")+'</button>';
+  if(IS_OWNER){   // owner: darhol blok (avtoritar)
+    var rej=(r.verdict===-1);
+    el.innerHTML='<span style="vertical-align:middle">'+base+'</span>'+
+      '<button class="sp-mod'+(rej?' rej':'')+'" onclick="spModVerdict()">'+
+      (rej?t("🚫 Rad etilgan — tiklash"):t("❌ Bu so'zga mos emas"))+'</button>';
+    return;
+  }
+  // Oddiy user: hisob + ko'zga tashlanmaydigan "mos emas" OGOHLANTIRISH (blok emas — adminka ko'radi)
+  var rep=!!r.reported;
+  el.innerHTML='<div>'+base+'</div>'+
+    (SERVER ? '<button class="sp-report'+(rep?' done':'')+'"'+(rep?' disabled':'')+' onclick="spReport()">'+
+      (rep?t("✓ Ogohlantirdingiz, rahmat"):t("⚑ Video iboraga mos emas"))+'</button>' : '');
+}
+/* Oddiy user ogohlantirishi (SIGNAL): videoni yashirmaydi, adminkaga tushadi. */
+function spReport(){
+  var r=sp.results[sp.idx]; if(!r || !r.video_id || r.reported) return;
+  r.reported=true; spRenderCnt();
+  api('report_mismatch',{lang:sp.lang||'ru', word:sp.q, video_id:r.video_id}).catch(function(){});
+  if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
 }
 function spModVerdict(){
   if(!IS_OWNER) return;
@@ -3017,6 +3035,8 @@ try{
     I18N.ru["Saqlashda xatolik"]="Ошибка при сохранении";
     I18N.ru["Rad etildi"]="Отклонено";
     I18N.ru["Tiklandi"]="Восстановлено";
+    I18N.ru["⚑ Video iboraga mos emas"]="⚑ Видео не подходит к фразе";
+    I18N.ru["✓ Ogohlantirdingiz, rahmat"]="✓ Спасибо, отмечено";
   }
   if(I18N && I18N.kz){
     I18N.kz["Haftalik ball"]="Апталық ұпай";
