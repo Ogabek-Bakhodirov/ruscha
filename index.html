@@ -1845,7 +1845,7 @@ function openSeylyPlayer(results, q, mount, lang){
   sp.lang = lang || S.curLang;   // cue'lar shu til bo'yicha olinadi (en/ru)
   /* Klip sonini cheklaymiz: bitta so'zga o'nlab klip yuklash imkoni YouTube'ni "bot"
      deb belgilashiga sabab bo'ladi. Eng yaxshi CLIP_MAX tasi kifoya (rank bo'yicha saralangan). */
-  sp.results=dedupByVideo(results).slice(0, CLIP_MAX); sp.q=q; sp.slow=false;
+  sp.results=dedupByVideo(results).slice(0, IS_OWNER?50:CLIP_MAX); sp.q=q; sp.slow=false;   // owner: moderatsiya uchun to'liq pool
   if(mount.key==='search') hideYGSearch();
   renderAd();
   sp.errSkips=0;
