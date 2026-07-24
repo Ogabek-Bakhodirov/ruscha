@@ -2045,7 +2045,8 @@ function spRenderCnt(){
 function spReport(){
   var r=sp.results[sp.idx]; if(!r || !r.video_id || r.reported) return;
   r.reported=true; spRenderCnt();
-  api('report_mismatch',{lang:sp.lang||'ru', word:sp.q, video_id:r.video_id}).catch(function(){});
+  api('report_mismatch',{lang:sp.lang||'ru', word:sp.q, video_id:r.video_id,
+    start_time:Math.max(0,Math.floor(Number(r.start_time)||0)), snippet:String(r.text||'').slice(0,300)}).catch(function(){});
   if(tg&&tg.HapticFeedback){try{tg.HapticFeedback.impactOccurred('light')}catch(e){}}
 }
 function spModVerdict(){
