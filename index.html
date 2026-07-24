@@ -835,6 +835,36 @@ var INTERESTS = [
 ];
 /* CEFR darajalari (A1–C2). Qiymatlar: a1..c2. Backend hozircha eski qiymatlarni
    kutadi — bazani keyin moslaymiz (sanitizeLevels). Hozir faqat UI. */
+var LEVEL_NUM = {a1:1,a2:2,b1:3,b2:4,c1:5,c2:6};
+/* Kategoriya iboralarini foydalanuvchi darajasiga qarab TARTIBLAYDI (yashirmaydi).
+   Maqsad: 50% o'z daraja, 25% bir yuqori, 25% bir past (i+1 tamoyili). Chekka holatlar:
+   a1 -> 75% a1 + 25% a2; eng yuqori -> 75% o'z + 25% past. 2+ daraja uzoqdagilar
+   oxirida (baribir ochiq). Daraja yo'q (til yoki ibora) -> asl tartib saqlanadi. */
+function levelDistribute(phrases, uNum){
+  if(!uNum) return phrases;                       // foydalanuvchi darajasi yo'q -> tegmaymiz
+  var at=[], up=[], dn=[], far=[];
+  phrases.forEach(function(p){
+    var pn=LEVEL_NUM[String(p.level||'').toLowerCase()];
+    if(!pn){ far.push({p:p,d:99}); return; }       // darajasiz ibora -> uzoq
+    var d=pn-uNum;
+    if(d===0) at.push(p); else if(d===1) up.push(p); else if(d===-1) dn.push(p);
+    else far.push({p:p,d:Math.abs(d)});
+  });
+  // og'irliklar: chekka bo'sh bo'lsa 0.25 o'z darajaga qo'shiladi
+  var w0=0.5, wUp=up.length?0.25:0, wDn=dn.length?0.25:0;
+  if(!up.length) w0+=0.25;
+  if(!dn.length) w0+=0.25;
+  // Weighted fair queueing: har ibora kaliti = (o'rin+0.5)/og'irlik; kichik avval
+  var keyed=[];
+  function push(arr,w){ if(!w) return; arr.forEach(function(p,j){ keyed.push({p:p,k:(j+0.5)/w}); }); }
+  push(at,w0); push(up,wUp); push(dn,wDn);
+  keyed.sort(function(a,b){ return a.k-b.k; });
+  var out=keyed.map(function(x){ return x.p; });
+  // uzoq darajalar oxirida (masofa bo'yicha)
+  far.sort(function(a,b){ return a.d-b.d; });
+  far.forEach(function(x){ out.push(x.p); });
+  return out;
+}
 var LEVEL_OPTS = [
   {v:"a1", em:"🌱", t:"A1", s:"Deyarli noldan"},
   {v:"a2", em:"🌿", t:"A2", s:"Oddiy so'zlar"},
@@ -1185,7 +1215,9 @@ function openCat(key){
   document.getElementById('catHead').innerHTML=
     '<span class="cico chd">'+catIcon(curCat.key)+'</span><div><h2>'+t(curCat.title)+'</h2><p>'+t('{n} ta ibora',{n:curCat.phrases.length})+'</p></div>';
   var h='';
-  curCat.phrases.forEach(function(p){
+  var uNum=LEVEL_NUM[String((S.levels&&S.levels[S.curLang])||'').toLowerCase()]||0;
+  var ordered=levelDistribute(curCat.phrases, uNum);
+  ordered.forEach(function(p){
     var done=!!S.learned[p.id];
     h+='<div class="ph-item" id="phi-'+p.id+'">'+
        '<div class="ph-row" onclick="togglePh('+p.id+')">'+
@@ -2978,7 +3010,7 @@ function speak(enc, tts){
 }
 
 /* ================== ISHGA TUSHIRISH ================== */
-var PH_VER = "v5";   // phrases.json versiyasi — kontent o'zgarsa oshiring (kesh yangilanadi)
+var PH_VER = "v6";   // phrases.json versiyasi — kontent o'zgarsa oshiring (kesh yangilanadi)
 
 /* 1) init'ni DARROV yuboramiz — phrases yuklanishini KUTMASDAN (parallel, tezlik uchun) */
 var initPromise = SERVER ? api('init').catch(function(){ return null; }) : Promise.resolve(false);
