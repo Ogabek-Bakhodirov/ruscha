@@ -865,6 +865,38 @@ function levelDistribute(phrases, uNum){
   far.forEach(function(x){ out.push(x.p); });
   return out;
 }
+/* Kategoriya ichida NECHTA ibora ko'rsatiladi (sozlanadi). Uzoq darajalar
+   (|masofa|>=2) umuman ko'rsatilmaydi; qolganidan 50/25/25 nisbatда shuncha olinadi. */
+var PHRASE_CAP = 40;
+function levelPick(phrases, uNum, N){
+  if(!uNum) return phrases;                                   // daraja tanlanmagan -> hammasi
+  var leveled=phrases.filter(function(p){ return LEVEL_NUM[String(p.level||'').toLowerCase()]; });
+  if(!leveled.length) return phrases;                         // bu tilda daraja yo'q (en/de) -> hammasi
+  var at=[],up=[],dn=[],far=[];
+  leveled.forEach(function(p){
+    var d=LEVEL_NUM[String(p.level).toLowerCase()]-uNum;
+    if(d===0) at.push(p); else if(d===1) up.push(p); else if(d===-1) dn.push(p);
+    else far.push({p:p,d:Math.abs(d)});                       // 2+ uzoq -> tashlanadi (fallback uchun saqlaymiz)
+  });
+  var tUp=up.length?Math.round(N*0.25):0, tDn=dn.length?Math.round(N*0.25):0;
+  var selUp=up.slice(0,tUp), selDn=dn.slice(0,tDn);
+  var selAt=at.slice(0, Math.max(0, N-selUp.length-selDn.length));
+  var pool=selAt.concat(selUp).concat(selDn);
+  if(pool.length<N){                                          // at yetmadi -> qolgan yaqin (±1) lardan to'ldir
+    var rest=up.slice(selUp.length).concat(dn.slice(selDn.length));
+    pool=pool.concat(rest.slice(0, N-pool.length));
+  }
+  if(pool.length<N && far.length){                            // hali kam (yuqori daraja, kontent siyrak) -> eng yaqin uzoqlardan
+    far.sort(function(a,b){ return a.d-b.d; });               // masofa bo'yicha: eng yaqin daraja avval
+    pool=pool.concat(far.slice(0, N-pool.length).map(function(x){ return x.p; }));
+  }
+  return levelDistribute(pool, uNum);                         // ratio bo'yicha aralashtirib ko'rsatamiz
+}
+/* Joriy til + daraja bo'yicha kategoriyaning ko'rsatiladigan iboralari (Asosiy + ichki bir xil) */
+function catPhrases(c){
+  var uNum=LEVEL_NUM[String((S.levels&&S.levels[S.curLang])||'').toLowerCase()]||0;
+  return levelPick(c.phrases, uNum, PHRASE_CAP);
+}
 var LEVEL_OPTS = [
   {v:"a1", em:"🌱", t:"A1", s:"Deyarli noldan"},
   {v:"a2", em:"🌿", t:"A2", s:"Oddiy so'zlar"},
@@ -1107,7 +1139,7 @@ function renderHome(){
   renderStreakBox();
   renderReviewBox();
   document.getElementById('stLearned').textContent=learnedCount();
-  var tot=0; cats().forEach(function(c){tot+=c.phrases.length;});
+  var tot=0; cats().forEach(function(c){tot+=catPhrases(c).length;});
   document.getElementById('stTotal').textContent=tot;
   document.getElementById('proBadge').style.display=S.pro?'inline-block':'none';
   var g=goal(), reached=S.todayNew>=g;
@@ -1122,13 +1154,14 @@ function renderHome(){
   });
   var h='';
   order.forEach(function(c){
-    var n=c.phrases.length;
+    var picked=catPhrases(c);
+    var n=picked.length;
     if(!n){
       h+='<div class="cat" onclick="openCat(\''+c.key+'\')" style="opacity:.75"><div class="cico">'+catIcon(c.key)+'</div><h3>'+t(c.title)+'</h3>'+
          '<span class="soon">'+t('Tez orada')+' 🚧</span></div>';
       return;
     }
-    var done=c.phrases.filter(function(p){return S.learned[p.id];}).length;
+    var done=picked.filter(function(p){return S.learned[p.id];}).length;
     var pct=Math.round(done/n*100);
     h+='<div class="cat" onclick="openCat(\''+c.key+'\')"><div class="cico">'+catIcon(c.key)+'</div><h3>'+t(c.title)+'</h3>'+
        '<div class="cbar"><i style="width:'+pct+'%"></i></div><small>'+done+' / '+n+'</small></div>';
@@ -1212,11 +1245,10 @@ function openCat(key){
     toast(langInfo(S.curLang).flag+" "+t("Bu til uchun iboralar tez orada qo'shiladi 🚧"));
     return;
   }
+  var ordered=catPhrases(curCat);
   document.getElementById('catHead').innerHTML=
-    '<span class="cico chd">'+catIcon(curCat.key)+'</span><div><h2>'+t(curCat.title)+'</h2><p>'+t('{n} ta ibora',{n:curCat.phrases.length})+'</p></div>';
+    '<span class="cico chd">'+catIcon(curCat.key)+'</span><div><h2>'+t(curCat.title)+'</h2><p>'+t('{n} ta ibora',{n:ordered.length})+'</p></div>';
   var h='';
-  var uNum=LEVEL_NUM[String((S.levels&&S.levels[S.curLang])||'').toLowerCase()]||0;
-  var ordered=levelDistribute(curCat.phrases, uNum);
   ordered.forEach(function(p){
     var done=!!S.learned[p.id];
     h+='<div class="ph-item" id="phi-'+p.id+'">'+
